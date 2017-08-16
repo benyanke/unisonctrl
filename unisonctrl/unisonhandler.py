@@ -52,7 +52,40 @@ class UnisonHandler():
         # self.data_storage.set_data("key1", {'filekey1':'file value data, yoooooo'})
         data = self.data_storage.get_data("key1")
 
+        if(self.DEBUG):
+            print("Constructor complete")
+    """
 
+    # Algo required
+
+    commands:
+
+    unisonctrl status - not sure, maybe combine with list
+
+    unisonctrl list - list currently running unison instances by reading pidfiles
+    and perhaps:
+        - confirming they're still running (pidcheck, simple)
+        - confirming they're not stuck (logs? pid communicaton?)
+        - when was last loop? (logs? wrapper script?)
+
+    unisonctrl update - check directory structure and make sure rules don't need
+    to be changed because of a change or
+
+    unisonctrl restart - stop + start
+
+    unisonctrl stop - stop all running unison instances, delete files in tmp dir
+
+    unisonctrl start - recalculate directory structure and regenerate config
+    files, restart unison instances
+
+
+    other features not sure where to put:
+
+     * check for unexpected dead processes and check logs
+     * parse logs and send stats to webhook
+     * calculate average sync latency
+
+    """
 
     def import_config(self):
         """
@@ -132,8 +165,7 @@ class UnisonHandler():
             self.config[key] = self.sanatize_path(self.config[key])
 
         # A few hardcoded config values
-
-        self.config['json_data_dir'] = self.config['data_dir'] + os.sep + "running-unison-data"
+        self.config['json_data_dir'] = self.config['data_dir'] + os.sep + "running-sync-instances"
 
 
         # If you reach here, configuration was read without error.

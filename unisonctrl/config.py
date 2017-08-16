@@ -3,11 +3,11 @@
 # Path to store PID files
 
 # This does not need to persist between reboots, as it only contains information about running
-# unison instances. Typically easiest to mount somewhere in /var/run
-data_dir = '/var/run/unisonctrl'
+# unison instances. Typically easiest to mount somewhere in /var/run, or /tmp
+data_dir = '/tmp/unisonctrl'
 
 # Directory where the unison configuration files are stored
-unison_config_dir = '/var/run/unisonctrl'
+unison_config_dir = '/opt/unison/config'
 
 # Directory where the unison configuration file templates are stored
 unison_config_template_dir = '/opt/unison/config/templates'

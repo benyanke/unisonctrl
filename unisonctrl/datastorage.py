@@ -22,7 +22,7 @@ class DataStorage():
     # Enables extra output
     DEBUG = False
 
-    def __init__(self, debug,config):
+    def __init__(self, debug, config):
         """
         Imports configuration and running script data.
 
@@ -39,12 +39,11 @@ class DataStorage():
         # Pass along parent's debug status
         self.DEBUG = debug
 
+        # Import config from parent
+        self.config = config
+
         # Register exit handler
         atexit.register(self.exit_handler)
-
-        # Process configuration details
-#        self.import_config()
-        self.config = config
 
         # Get data associated with running unison instances
         self.import_file_data()
@@ -111,7 +110,7 @@ class DataStorage():
         self.check_data_dir_permissions()
 
         # Make dir for pid files, if config allows it
-        if  (not os.path.exists(self.config['data_dir'])) and (config['make_root_directories_if_not_found']):
+        if  (not os.path.exists(self.config['data_dir'])) and (self.config['make_root_directories_if_not_found']):
             os.makedirs(self.config['data_dir'])
 
         # If directory doesn't exist and config doesn't allow new ones to be
