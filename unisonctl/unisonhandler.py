@@ -85,7 +85,8 @@ class UnisonHandler():
             'unison_config_dir',
             'data_dir',
             'log_file',
-            'make_root_directories_if_not_found'
+            'make_root_directories_if_not_found',
+            'sync_hierarchy_rules'
         }
 
 
