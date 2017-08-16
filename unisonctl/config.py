@@ -38,7 +38,7 @@ sync_hierarchy_rules = [
         #   name_highfirst
         #   creation_date_highfirst
         #   creation_date_lowfirst
-        'method':'int_sort_high_low',
+        'method':'name_highfirst',
         # Select X from the top of the list you sorted above
         'method_param':3
     },
@@ -46,14 +46,14 @@ sync_hierarchy_rules = [
     # Sync the 6 highest-counted folders starting with '11' in their own unison instance
     {
         'dir_filter':'11*',
-        'method':'int_sort_high_low',
+        'method':'name_highfirst',
         'method_param':6
     },
 
     # Sync the 3 highest-counted folders starting with "O" in their own unison instance
     {
         'dir_filter':'O*',
-        'method':'int_sort_high_low',
+        'method':'name_highfirst',
         'method_param':3
     },
 
