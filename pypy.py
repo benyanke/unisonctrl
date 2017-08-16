@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import unisonctl
+import unisonctrl
 
-uc = unisonctl()
+uc = unisonctrl()
 uc.check_state()

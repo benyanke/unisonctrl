@@ -101,7 +101,7 @@ class UnisonHandler():
 
         # Values here are used as config values unless overridden in the config.py file
         defaultSettings = {
-            'data_dir':'/var/run/unisonctld',
+            'data_dir':'/var/run/unisonctrld',
             'log_file':'/dev/null',
             'make_root_directories_if_not_found':True,
         }

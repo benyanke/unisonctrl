@@ -4,10 +4,10 @@
 
 # This does not need to persist between reboots, as it only contains information about running
 # unison instances. Typically easiest to mount somewhere in /var/run
-data_dir = '/var/run/unisonctl'
+data_dir = '/var/run/unisonctrl'
 
 # Directory where the unison configuration files are stored
-unison_config_dir = '/var/run/unisonctl'
+unison_config_dir = '/var/run/unisonctrl'
 
 # Directory where the unison configuration file templates are stored
 unison_config_template_dir = '/opt/unison/config/templates'
@@ -41,6 +41,8 @@ sync_hierarchy_rules = [
         # Select X from the top of the list you sorted above
         'sort_count':3,
     },
+
+# 6cKMoYo$
 
     # Sync the 3 highest-counted folders starting with '11' in their own unison instance
     {

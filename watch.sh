@@ -1,5 +1,5 @@
-file="/home/benyanke/git/unisonctl/unisonctl/unisonhandler.py"
-watch="/home/benyanke/git/unisonctl/unisonctl/*.py"
+file="/home/benyanke/git/unisonctrl/unisonctrl/unisonhandler.py"
+watch="/home/benyanke/git/unisonctrl/unisonctrl/*.py"
 
 function run() {
   clear;
