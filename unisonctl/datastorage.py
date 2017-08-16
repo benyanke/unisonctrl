@@ -1,20 +1,17 @@
 #!/usr/bin/env python3
 
-# Unison control script
-#
-# This script controls multiple unison instances to better handle syncing a large
-# dataset
-#
+# This script handles the file-based data storage, acting as a backend for the
+# other parts of the script
 
 # TODO: Replace DEBUG var with an actual logging framework, including log levels
 
-import subprocess
+# import subprocess
 import json
 import os
 import glob
 import atexit
 
-class UnisonCtl():
+class DataStorage():
 
     # data associated with each running unison instance
     running_data = {}
@@ -23,9 +20,9 @@ class UnisonCtl():
     config = {}
 
     # Enables extra output
-    DEBUG = True
+    DEBUG = False
 
-    def __init__(self):
+    def __init__(self, debug,config):
         """
         Imports configuration and running script data.
 
@@ -39,25 +36,64 @@ class UnisonCtl():
             null
         """
 
+        # Pass along parent's debug status
+        self.DEBUG = debug
+
         # Register exit handler
         atexit.register(self.exit_handler)
 
         # Process configuration details
-        self.import_config()
+#        self.import_config()
+        self.config = config
 
         # Get data associated with running unison instances
-        self.import_running_data()
+        self.import_file_data()
 
-        # Debug line
-        if(self.DEBUG):
-            print(self.running_data);
+    def get_data(self,key):
+        """
+        A getter method for the data
 
+        Paramaters :
+            key of the data to get
 
-    def import_running_data(self):
+        Throws :
+            none
+
+        Returns :
+            requested data (or null, if not existing)
+        """
+        # Note: this might not be accurate if multiple processes are
+        # reading/writing the data
+
+        # If the key exists in the array, return the data
+        if key in self.running_data:
+            return self.running_data[key]
+
+    def set_data(self,key,data):
+        """
+        A setter method for the data.
+
+        Paramaters :
+            key of the data to get, value to set
+
+        Throws :
+            none
+
+        Returns :
+            requested data (or null, if not existing)
+        """
+
+        # Store the data to the array
+        self.running_data[key] = data
+
+        # Also store back to files, for data persistence
+        self.write_running_data
+
+    def import_file_data(self):
         """
         Parses the filesystem location specified in config option 'data_dir'
         and loads information about each running unison instance in to the
-        'self.import_running_data' attribute.
+        'self.import_file_data' attribute.
 
         TODO: TESTME
 
@@ -126,6 +162,9 @@ class UnisonCtl():
                     print("Warning: corrupted json data")
                 raise ValueError("Datafile '" + json_data_filename + "' contained invalid json")
 
+        if(self.DEBUG):
+            print("It appears the file data was successfully imported");
+
         return
 
     def check_data_dir_permissions(self):
@@ -148,129 +187,6 @@ class UnisonCtl():
 
         # raise IOError("The directory '" + self.config['data_dir'] + "' does not exist")
 
-    def sanatize_path(self, path):
-        """
-        Used internally to sanatize directory paths to remove whitespace, as well
-        as trailing slashes. Currently only supports unix slashes.
-
-        Paramaters :
-            1) directory path to sanatize
-
-        Throws :
-            none
-
-        Returns :
-            Sanatized directory path
-
-        Doctests :
-        >>> UC = UnisonCtl()
-
-        >>> UC.sanatize_path(" /extra/whitespace ")
-        '/extra/whitespace'
-
-        >>> UC.sanatize_path("/dir/with/trailing/slash/")
-        '/dir/with/trailing/slash'
-
-        >>> UC.sanatize_path("  /dir/with/trailing/slash/and/whitepace/   ")
-        '/dir/with/trailing/slash/and/whitepace'
-
-        >>> UC.sanatize_path("  /dir/with/trailing/slashes////   ")
-        '/dir/with/trailing/slashes'
-
-        """
-
-        # Remove extra whitespace
-        path = path.strip()
-
-        # Remove slash from end of path
-        path = path.rstrip(os.sep)
-
-        return path;
-
-    def import_config(self):
-        """
-        Handles config setup and importing, also contains sane defaults
-        which are used if there's no given config option set.
-
-        TODO: Implement command line config options here?
-
-        Paramaters :
-            none
-
-        Throws :
-            'LookupError' exception raised if config is invalid.
-
-        Returns :
-            null
-        """
-
-        # Get the config file
-        import config
-
-        # Get all keys from keyvalue pairs in the config file
-        settingsFromConfigFile = [x for x in dir(config) if not x.startswith('__')]
-
-        # Settings validation: specify keys which are valid settings
-        # If there are rows in the config file which are not listed here, an error
-        # will be raised
-        validSettings = {
-            'unison_config_template_dir',
-            'unison_config_dir',
-            'data_dir',
-            'log_file',
-            'make_root_directories_if_not_found'
-        }
-
-
-        # If a setting contains a directory path, add it's key here and it will be
-        # sanatized (whitespace and trailing whitespaces stripped)
-        settingPathsToSanitize = {
-            'unison_config_template_dir',
-            'unison_config_dir',
-            'data_dir',
-        }
-
-
-        # Values here are used as config values unless overridden in the config.py file
-        defaultSettings = {
-            'data_dir':'/var/run/unisonctld',
-            'log_file':'/dev/null',
-            'make_root_directories_if_not_found':True,
-        }
-
-
-        # Convert config file into dict
-        for key in settingsFromConfigFile:
-            value = getattr(config, key)
-            self.config[key] = value
-
-        # Apply default settings to fill gaps between explicitly set ones
-        for key in defaultSettings:
-            if (key not in self.config):
-                self.config[key] = defaultSettings[key].strip()
-
-        # Ensure all required keys are specified
-        for key in validSettings:
-            if (key not in self.config):
-                raise LookupError("Required config entry '" + key + "' not specified")
-
-        # Ensure no additional keys are specified
-        for key in self.config:
-            if (key not in validSettings):
-                raise LookupError("Unknown config entry: '" + key + "'")
-
-        # Sanatize directory paths
-        for key in settingPathsToSanitize:
-            self.config[key] = self.sanatize_path(self.config[key])
-
-        # A few hardcoded config values
-
-        self.config['json_data_dir'] = self.config['data_dir'] + os.sep + "running-unison-data"
-
-
-        # If you reach here, configuration was read without error.
-        return;
-
     def file_get_contents(self, filename):
         """
         Small helper function to read a file and returns it's contents
@@ -289,7 +205,6 @@ class UnisonCtl():
         with open(filename) as f:
             return f.read()
 
-    # TODO: Implement me
     def file_put_contents(self, filename, filecontent):
         """
         Small helper function to write a file
@@ -333,15 +248,15 @@ class UnisonCtl():
             file content
 
         Doctests :
-        >>> UC = UnisonCtl()
+        >>> DS = DataStorage()
 
-        >>> UC.get_filename_from_path("/extra/whitespace/filename")
+        >>> DS.get_filename_from_path("/extra/whitespace/filename")
         'filename'
 
-        >>> UC.get_filename_from_path("/extra/whitespace/filename.json")
+        >>> DS.get_filename_from_path("/extra/whitespace/filename.json")
         'filename.json'
 
-        >>> UC.get_filename_from_path("/fileAtRoot.ini")
+        >>> DS.get_filename_from_path("/fileAtRoot.ini")
         'fileAtRoot.ini'
 
         """
@@ -362,13 +277,15 @@ class UnisonCtl():
             null
         """
         if(self.DEBUG):
-            print("Writing data to files")
+            print("Writing data to files now")
 
-        if(self.DEBUG):
-            print(self.running_data)
 
         # Looping through self.running_data to write each entry to it's own file
         for key in self.running_data:
+
+            if(self.DEBUG):
+                print("Writing to " + key + ".json: " + str(json.dumps(self.running_data[key])))
+
             self.file_put_contents(self.config['json_data_dir']  + os.sep + key + ".json", json.dumps(self.running_data[key]))
 
             if(self.DEBUG):
@@ -388,16 +305,9 @@ class UnisonCtl():
             null
         """
         if(self.DEBUG):
-            print("Starting script shutdown");
+            print("Starting script shutdown in the class " + self.__class__.__name__);
 
         self.write_running_data()
 
         if(self.DEBUG):
-            print("Script shutdown complete");
-
-    def start(self):
-        print("tmp")
-
-# tmp : make this more robust
-uc = UnisonCtl()
-uc.start()
+            print("Script shutdown complete in class " + self.__class__.__name__);
