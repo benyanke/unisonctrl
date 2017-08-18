@@ -1,4 +1,4 @@
 [flake8]
-ignore = E501
+ignore = E501, D100, D104
 exclude = docs/*, tests/*, build/*, venv/*
 max-complexity = 16

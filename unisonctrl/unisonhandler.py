@@ -5,12 +5,13 @@
 # This script handles the file-based data storage
 #
 
-# TODO: Replace DEBUG var with an actual logging framework, including log levels
+# TODO: Replace DEBUG var with an actual logging framework, including log level
 
-import subprocess
-import json
+# import subprocess
+from subprocess import check_output
+# im002-psport json
 import os
-import glob
+# import glob
 import atexit
 from datastorage import DataStorage
 
@@ -26,9 +27,8 @@ class UnisonHandler():
 
     # Enables extra output
     DEBUG = True
-    # DEBUG = False
 
-    def __init__(self):
+    def __init__(self, debug=DEBUG):
         """Prepare UnisonHandler to manage unison instances.
 
         Parameters
@@ -37,20 +37,27 @@ class UnisonHandler():
 
         Returns
         -------
+        null
+
+        Throws
+        -------
         none
+
+        Doctests
+        -------
 
         """
         # Register exit handler
         atexit.register(self.exit_handler)
+
+        # Handle manual debug setting
+        self.DEBUG = debug
 
         # Set up configuration
         self.import_config()
 
         # Set up data storage backend
         self.data_storage = DataStorage(self.DEBUG, self.config)
-
-        # self.data_storage.set_data("key1", {'filekey1': 'file value data, yoooooo'})
-        data = self.data_storage.get_data("key1")
 
         if(self.DEBUG):
             print("Constructor complete")
@@ -60,26 +67,27 @@ class UnisonHandler():
 
     commands:
 
-    unisonctrl status - not sure, maybe combine with list
+    unisonctrl status-not sure, maybe combine with list
 
-    unisonctrl list - list currently running unison instances by reading pidfiles
+    unisonctrl list-list currently running unison instances by reading pidfiles
     and perhaps:
         - confirming they're still running (pidcheck, simple)
         - confirming they're not stuck (logs? pid communicaton?)
         - when was last loop? (logs? wrapper script?)
 
-    unisonctrl update - check directory structure and make sure rules don't need
+    unisonctrl update-check directory structure and make sure rules don't need
     to be changed because of a change or
 
-    unisonctrl restart - stop + start
+    unisonctrl restart-stop + start
 
-    unisonctrl stop - stop all running unison instances, delete files in tmp dir
+    unisonctrl stop-stop all running unison instances, delete files in tmp dir
 
-    unisonctrl start - recalculate directory structure and regenerate config
+    unisonctrl start-recalculate directory structure and regenerate config
     files, restart unison instances
 
 
-    other features not sure where to put:/public/img should work, and is not caught by .gitignore
+    other features not sure where to put:/public/img should work, and is not
+    caught by .gitignore
 
         # Get the
      * check for unexpected dead processes and check logs
@@ -88,8 +96,36 @@ class UnisonHandler():
 
     """
 
+    def get_running_unison_processes(self):
+        """Return PIDs of currently running unison instances.
+
+        Parameters
+        ----------
+        none
+
+        Returns
+        -------
+        list
+            PIDs of unison instances
+
+        Throws
+        -------
+            'LookupError' if config is invalid.
+
+        """
+        # Get PIDs
+        out = str(check_output(["pidof", 'unison']))
+
+        # Parse command output into list
+        out = out[2:-3].split(' ')
+
+        # out = os.system("ps aux | grep \"unison\"")
+        print(out)
+
+        return None
+
     def import_config(self):
-        """Import config from config.py, implement some sane defaults when not specified.
+        """Import config from config, and apply details where needed.
 
         Parameters
         ----------
@@ -111,30 +147,35 @@ class UnisonHandler():
         settingsFromConfigFile = [x for x in dir(config) if not x.startswith('__')]
 
         # Settings validation: specify keys which are valid settings
-        # If there are rows in the config file which are not listed here, an error
-        # will be raised
+        # If there are rows in the config file which are not listed here, an
+        # error will be raised
         validSettings = {
             'unison_config_template_dir',
             'unison_config_dir',
             'data_dir',
             'log_file',
             'make_root_directories_if_not_found',
-            'sync_hierarchy_rules'
+            'sync_hierarchy_rules',
+            'unison_local_root',
+            'unison_remote_root',
+            'unison_path',
         }
 
-        # If a setting contains a directory path, add it's key here and it will be
-        # sanatized (whitespace and trailing whitespaces stripped)
+        # If a setting contains a directory path, add it's key here and it will
+        # be sanatized (whitespace and trailing whitespaces stripped)
         settingPathsToSanitize = {
             'unison_config_template_dir',
             'unison_config_dir',
             'data_dir',
         }
 
-        # Values here are used as config values unless overridden in the config.py file
+        # Values here are used as config values unless overridden in the
+        # config.py file
         defaultSettings = {
             'data_dir': '/var/run/unisonctrld',
             'log_file': '/dev/null',
             'make_root_directories_if_not_found': True,
+            'unison_path': '/usr/bin/unison',  # Default ubuntu path for unison
         }
 
         # Convert config file into dict
@@ -162,27 +203,34 @@ class UnisonHandler():
             self.config[key] = self.sanatize_path(self.config[key])
 
         # A few hardcoded config values
-        self.config['json_data_dir'] = self.config['data_dir'] + os.sep + "running-sync-instances"
+        self.config['data_dir'] = self.config['data_dir'] + os.sep + "running-sync-instances"
 
         # If you reach here, configuration was read without error.
         return
 
     def sanatize_path(self, path):
-        """
-        Used internally to sanatize directory paths to remove whitespace, as well
-        as trailing slashes. Currently only supports unix slashes.
+        """Sanitize directory paths by removing whitespace and trailing slashes.
 
-        Paramaters :
-            1) directory path to sanatize
+        Currently only tested on Unix, but should also work on Windows.
+        TODO: Test on windows to ensure it works properly.
 
-        Throws :
-            none
+        Parameters
+        ----------
+        1) str
+            directory path to sanatize
 
-        Returns :
-            Sanatized directory path
+        Returns
+        -------
+        str
+            sanatized directory path
 
-        Doctests :
-        >>> US = UnisonHandler()
+        Throws
+        -------
+        none
+
+        Doctests
+        -------
+        >>> US = UnisonHandler(False)
 
         >>> US.sanatize_path(" /extra/whitespace ")
         '/extra/whitespace'
@@ -193,40 +241,56 @@ class UnisonHandler():
         >>> US.sanatize_path("  /dir/with/trailing/slash/and/whitepace/   ")
         '/dir/with/trailing/slash/and/whitepace'
 
-        >>> US.sanatize_path("  /dir/with/trailing/slashes////   ")
-        '/dir/with/trailing/slashes'
+        >>> US.sanatize_path("  /dir/with/many/trailing/slashes////   ")
+        '/dir/with/many/trailing/slashes'
 
         """
-
         # Remove extra whitespace
         path = path.strip()
 
         # Remove slash from end of path
         path = path.rstrip(os.sep)
 
-        return path;
+        return path
 
     def exit_handler(self):
-        """
-        This function is called on exit automatically
+        """Is called on exit automatically.
 
-        Paramaters :
-            none
+        Paramaters
+        -------
+        none
 
-        Throws :
-            none
+        Throws
+        -------
+        none
 
-        Returns :
-            null
+        Returns
+        -------
+        none
+
+        Throws
+        -------
+        none
+
+        Doctests
+        -------
+
         """
         if(self.DEBUG):
-            print("Starting script shutdown in the class " + self.__class__.__name__);
+            print(
+                "Starting script shutdown in the class " +
+                self.__class__.__name__
+            )
 
-        # self.write_running_data()
+        self.data_storage.write_running_data()
 
         if(self.DEBUG):
-            print("Script shutdown complete in class " + self.__class__.__name__);
+            print(
+                "Script shutdown complete in class " +
+                self.__class__.__name__
+            )
 
 
 # tmp : make this more robust
-US = UnisonHandler()
+US = UnisonHandler(True)
+US.get_running_unison_processes()
