@@ -14,7 +14,9 @@ import glob
 import atexit
 from datastorage import DataStorage
 
+
 class UnisonHandler():
+    """Starts, stops and monitors unison instances."""
 
     # Object for data storage backend
     data_storage = None
@@ -27,19 +29,17 @@ class UnisonHandler():
     # DEBUG = False
 
     def __init__(self):
+        """Prepare UnisonHandler to manage unison instances.
+
+        Parameters
+        ----------
+        none
+
+        Returns
+        -------
+        none
+
         """
-        Imports configuration and running script data.
-
-        Paramaters :
-            none
-
-        Throws :
-            none
-
-        Returns :
-            null
-        """
-
         # Register exit handler
         atexit.register(self.exit_handler)
 
@@ -49,7 +49,7 @@ class UnisonHandler():
         # Set up data storage backend
         self.data_storage = DataStorage(self.DEBUG, self.config)
 
-        # self.data_storage.set_data("key1", {'filekey1':'file value data, yoooooo'})
+        # self.data_storage.set_data("key1", {'filekey1': 'file value data, yoooooo'})
         data = self.data_storage.get_data("key1")
 
         if(self.DEBUG):
@@ -79,8 +79,9 @@ class UnisonHandler():
     files, restart unison instances
 
 
-    other features not sure where to put:
+    other features not sure where to put:/public/img should work, and is not caught by .gitignore
 
+        # Get the
      * check for unexpected dead processes and check logs
      * parse logs and send stats to webhook
      * calculate average sync latency
@@ -88,22 +89,21 @@ class UnisonHandler():
     """
 
     def import_config(self):
+        """Import config from config.py, implement some sane defaults when not specified.
+
+        Parameters
+        ----------
+        none
+
+        Returns
+        -------
+        null
+
+        Throws
+        -------
+            'LookupError' if config is invalid.
+
         """
-        Handles config setup and importing, also contains sane defaults
-        which are used if there's no given config option set.
-
-        TODO: Implement command line config options here?
-
-        Paramaters :
-            none
-
-        Throws :
-            'LookupError' exception raised if config is invalid.
-
-        Returns :
-            null
-        """
-
         # Get the config file
         import config
 
@@ -122,7 +122,6 @@ class UnisonHandler():
             'sync_hierarchy_rules'
         }
 
-
         # If a setting contains a directory path, add it's key here and it will be
         # sanatized (whitespace and trailing whitespaces stripped)
         settingPathsToSanitize = {
@@ -131,14 +130,12 @@ class UnisonHandler():
             'data_dir',
         }
 
-
         # Values here are used as config values unless overridden in the config.py file
         defaultSettings = {
-            'data_dir':'/var/run/unisonctrld',
-            'log_file':'/dev/null',
-            'make_root_directories_if_not_found':True,
+            'data_dir': '/var/run/unisonctrld',
+            'log_file': '/dev/null',
+            'make_root_directories_if_not_found': True,
         }
-
 
         # Convert config file into dict
         for key in settingsFromConfigFile:
@@ -167,9 +164,8 @@ class UnisonHandler():
         # A few hardcoded config values
         self.config['json_data_dir'] = self.config['data_dir'] + os.sep + "running-sync-instances"
 
-
         # If you reach here, configuration was read without error.
-        return;
+        return
 
     def sanatize_path(self, path):
         """

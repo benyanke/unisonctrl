@@ -24,12 +24,12 @@ sync_hierarchy_rules = [
     {
         # Name of the unison profile which will be created
         # can be any alphanumeric string (a-z, A-Z, 1-9) to identify the sync
-        'syncname':'recent-phone-orders-batch1',
+        'syncname': 'recent-phone-orders-batch1',
 
         # Select the directories which will be synced with this profile
         # Use standard shell globbing to select files from the root directory
         # TODO: rewrite that wording
-        'dir_selector':'11*',
+        'dir_selector': '11*',
 
         # Select a method to sort the files
         # Current options:
@@ -37,18 +37,18 @@ sync_hierarchy_rules = [
         #   name_highfirst
         #   creation_date_highfirst
         #   creation_date_lowfirst
-        'sort_method':'name_highfirst',
+        'sort_method': 'name_highfirst',
         # Select X from the top of the list you sorted above
-        'sort_count':3,
+        'sort_count': 3,
     },
 
 # 6cKMoYo$
 
     # Sync the 3 highest-counted folders starting with '11' in their own unison instance
     {
-        'syncname':'recent-phone-orders-batch2',
-        'dir_selector':'11*',
-        'sort_method':'name_highfirst',
+        'syncname': 'recent-phone-orders-batch2',
+        'dir_selector': '11*',
+        'sort_method': 'name_highfirst',
 
         # You can also use offset to start the count down the list. For example,
         # this search would capture directores 4-6 in the search, because after
@@ -59,22 +59,22 @@ sync_hierarchy_rules = [
 
     # Sync the 6 highest-counted folders starting with '11' in their own unison instance
     {
-        'syncname':'recent-phone-orders',
-        'dir_selector':'11*',
-        'sort_method':'name_highfirst',
+        'syncname': 'recent-phone-orders',
+        'dir_selector': '11*',
+        'sort_method': 'name_highfirst',
         'sort_count':6,
     },
 
     # Sync the 3 highest-counted folders starting with "O" in their own unison instance
     {
-        'syncname':'recent-phone-orders',
-        'dir_selector':'O*',
-        'sort_method':'name_highfirst',
+        'syncname': 'recent-phone-orders',
+        'dir_selector': 'O*',
+        'sort_method': 'name_highfirst',
         'sort_count':3,
     },
     # Sync any files not caught above in their own instance
     {
-        'dir_selector':'*',
+        'dir_selector': '*',
         'overlap':True,
     },
 

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+# Ensure hooks are properly set
+/usr/bin/env bash "$GIT_DIR/../git-misc/updateHooks.sh"
+

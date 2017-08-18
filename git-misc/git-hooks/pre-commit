@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+# Ensure hooks are properly set
+/usr/bin/env bash "$GIT_DIR/../git-misc/updateHooks.sh"
+
+# Colors
+red='\033[0;31m'
+green='\033[0;32m'
+yellow='\033[0;33m'
+no_color='\033[0m'
+
+bold='\033[1m'
+unbold='\033[21m'
+
+red_bg='\033[41m'
+green_bg='\033[42m'
+yellow_bg='\033[43m'
+no_bg='\033[49m'
+
+
+# Run linter
+flake8 .
+
+if [[ $? != 0 ]]; then
+
+  echo -e "\n\n${yellow}Flake8 Linting failed. Aborting commit.${no_color}";
+  echo -e "\nIf you want to override automatic pre-commit testing, run commit again with '--no-verify'.\n\n${red_bg}${bold}WARNING: committing without code testing could result in a broken codebase. Use with caution.${unbold}${no_bg}\n";
+
+  exit 1;
+
+fi
+
+exit;
+# Run PHPUnit before commit
+vagrant ssh -- -t "cd /var/www/laravel; /var/www/laravel/vendor/bin/phpunit;"
+
+if [[ $? != 0 ]]; then
+
+  echo -e "\n\n${yellow}PHPUnit tests failed. Aborting commit.${no_color}";
+  echo -e "\nIf you want to override automatic pre-commit testing, run commit again with '--no-verify'.\n\n${red_bg}${bold}WARNING: committing without code testing could result in a broken codebase. Use with caution.${unbold}${no_bg}\n";
+
+  exit 1;
+
+fi
+
+echo -e "\n\nUnit test success. Continuing with commit. \n\n\n"
