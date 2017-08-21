@@ -83,6 +83,8 @@ class DataStorage():
         # If the key exists in the array, return the data
         if key in self.running_data:
             return self.running_data[key]
+        else:
+            return None
 
     def set_data(self, key, data):
         """Setter method for the data.
