@@ -340,10 +340,7 @@ class UnisonHandler():
                 return
 
         # If not dead after checks above, kill more aggressively
-
-
-        print(known_pids)
-
+        # TODO: fill in here
 
     def find_dead_processes(self):
         """Ensure all expected processes are still running.
@@ -572,7 +569,6 @@ class UnisonHandler():
                 "Starting script shutdown in the class " +
                 self.__class__.__name__
             )
-
 
         if(self.DEBUG):
             print(
