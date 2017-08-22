@@ -4,6 +4,7 @@ watch="/home/benyanke/git/unisonctrl/unisonctrl/*.py"
 function run() {
   clear;
   $file
+  flake8
 }
 
 run;

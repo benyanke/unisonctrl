@@ -272,8 +272,17 @@ class UnisonHandler():
             if(self.DEBUG):
                 print("Instance data found for " + instance_name + " - using different config, killing and restarting")
 
+            self.kill_instance_by_pid(requested_instance['pid'])
+            self.data_storage.remove_data(requested_instance['syncname'])
+
+        print(instance_name)
+        print("Test")
+
+        # Start the actual program
+        # TODO: Continue here
+
+        # subprocess.Popen(["rm","-r","some.file"])
         # self.kill_instance_by_pid(requested_instance['pid'])
-        self.kill_instance_by_pid(8408)
 
 
 # proc = Popen([cmd_str], shell=True,
@@ -322,12 +331,19 @@ class UnisonHandler():
 
         # TODO: Finish this error checking logic here, currently it doesn't check the PID
 
-        # Try and kill with sigint (same as ctrl+c)
+        # Try and kill with sigint (same as ctrl+c), if we are allowed to
         if pid not in known_pids:
             msg = "Process ID:" + str(pid) + " is not in our list of known PIDs - refusing to kill"
             raise RuntimeError(msg)
+
         else:
-            os.kill(pid, signal.SIGINT)
+
+            # Only kill PID if it exists
+            if psutil.pid_exists(pid):
+                os.kill(pid, signal.SIGINT)
+            else:
+                if(self.DEBUG):
+                    print("Process " + str(pid) + " does not exist")
 
         # Keep checkig to see if dead yet
         for _ in range(20):
@@ -339,6 +355,8 @@ class UnisonHandler():
                 # If dead, exit function
                 return
 
+        p = psutil.Process(pid)
+        p.terminate()
         # If not dead after checks above, kill more aggressively
         # TODO: fill in here
 
@@ -383,6 +401,7 @@ class UnisonHandler():
         Parameters
         ----------
         none
+
 
         Returns
         -------

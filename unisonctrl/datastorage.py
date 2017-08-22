@@ -86,6 +86,32 @@ class DataStorage():
         else:
             return None
 
+    def remove_data(self, key):
+        """Remove entry by key.
+
+        Parameters
+        ----------
+        1) str
+            key of the data to delete
+
+        Returns
+        -------
+        none
+
+        Throws
+        -------
+        none
+
+        Doctests
+        -------
+
+        """
+        # If the key exists in the array, delete the data
+        if key in self.running_data:
+            del self.running_data[key]
+
+        os.remove(self.config['data_dir'] + os.sep + key + ".json")
+
     def set_data(self, key, data):
         """Setter method for the data.
 
