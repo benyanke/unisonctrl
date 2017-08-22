@@ -280,6 +280,7 @@ class UnisonHandler():
 
         # Process dirs into a format for unison command line arguments
         dirs_for_unison = []
+        trimmed_dirs = []
         amount_to_clip = (len(self.config['unison_local_root']) + 1)
 
         for dir in dirs_to_sync:
@@ -293,30 +294,30 @@ class UnisonHandler():
             # Append to list for args
             dirs_for_unison.append(pathstr)
 
-        #    print(pathstr)
+            # Append to list for config storage
+            trimmed_dirs.append(dir_trimmed)
 
         # Start unison
         cmd = (
             [self.config['unison_path']] +
-            ["-root '" + str(self.config['unison_local_root']) + "'"] +
-            ["-root '" + str(self.config['unison_remote_root']) + "'"] +
+            ["'" + str(self.config['unison_local_root']) + "'"] +
+            ["'" + str(self.config['unison_remote_root']) + "'"] +
             dirs_for_unison +
             self.config['global_unison_config_options']
         )
-        # print(cmd)
+
+#        print(" ".join(cmd))
 
         running_instance = subprocess.Popen(
             cmd, shell=True,
             stdin=None, stdout=None, stderr=None, close_fds=True
         )
 
-#        print(running_instance.pid)
-
         instance_info = {
             "pid": running_instance.pid,
             "syncname": instance_name,
             "confighash": config_hash,
-            "dirs_to_sync": dirs_to_sync
+            "dirs_to_sync": trimmed_dirs
         }
 
         # Store instance info
@@ -637,6 +638,9 @@ class UnisonHandler():
                 "Starting script shutdown in the class " +
                 self.__class__.__name__
             )
+
+        # Clean up dead processes
+        self.cleanup_dead_processes()
 
         if(self.DEBUG):
             print(
