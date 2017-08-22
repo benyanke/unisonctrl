@@ -65,7 +65,10 @@ class UnisonHandler():
 
         if(self.DEBUG):
             print("Constructor complete")
-            self.create_all_sync_instances()
+
+        self.cleanup_dead_processes()
+        self.create_all_sync_instances()
+
     """
 
     # Algo required
@@ -275,20 +278,49 @@ class UnisonHandler():
             self.kill_instance_by_pid(requested_instance['pid'])
             self.data_storage.remove_data(requested_instance['syncname'])
 
-        print(instance_name)
-        print("Test")
+        # Process dirs into a format for unison command line arguments
+        dirs_for_unison = []
+        amount_to_clip = (len(self.config['unison_local_root']) + 1)
 
-        # Start the actual program
-        # TODO: Continue here
+        for dir in dirs_to_sync:
 
-        # subprocess.Popen(["rm","-r","some.file"])
-        # self.kill_instance_by_pid(requested_instance['pid'])
+            # Clip off directory from local root
+            dir_trimmed = dir[amount_to_clip:]
 
+            # Format for unison command line args
+            pathstr = "-path '" + dir_trimmed + "'"
 
-# proc = Popen([cmd_str], shell=True,
-#             stdin=None, stdout=None, stderr=None, close_fds=True)
-        # If reached here, a new instance is needed and the current one is dead
-        # or otherwise not in existance
+            # Append to list for args
+            dirs_for_unison.append(pathstr)
+
+        #    print(pathstr)
+
+        # Start unison
+        cmd = (
+            [self.config['unison_path']] +
+            ["-root '" + str(self.config['unison_local_root']) + "'"] +
+            ["-root '" + str(self.config['unison_remote_root']) + "'"] +
+            dirs_for_unison +
+            self.config['global_unison_config_options']
+        )
+        # print(cmd)
+
+        running_instance = subprocess.Popen(
+            cmd, shell=True,
+            stdin=None, stdout=None, stderr=None, close_fds=True
+        )
+
+#        print(running_instance.pid)
+
+        instance_info = {
+            "pid": running_instance.pid,
+            "syncname": instance_name,
+            "confighash": config_hash,
+            "dirs_to_sync": dirs_to_sync
+        }
+
+        # Store instance info
+        self.data_storage.set_data(instance_name, instance_info)
 
     def kill_instance_by_pid(self, pid):
         """Kill unison instance by PID.
@@ -355,12 +387,29 @@ class UnisonHandler():
                 # If dead, exit function
                 return
 
+        # If it did not die nicely, get subsequently more strong about killing it
         p = psutil.Process(pid)
-        p.terminate()
-        # If not dead after checks above, kill more aggressively
-        # TODO: fill in here
 
-    def find_dead_processes(self):
+        if psutil.pid_exists(pid):
+            p.terminate()
+        else:
+            return
+
+        time.sleep(.300)
+
+        for _ in range(20):
+
+            if psutil.pid_exists(pid):
+                # If still alive, keep waiting and try again
+                time.sleep(.300)
+                p.kill()
+            else:
+                # If dead, exit function
+                return
+        # TODO: log here - process couldn't be killed
+        return
+
+    def cleanup_dead_processes(self):
         """Ensure all expected processes are still running.
 
         Checks the running_data list against the current PID list to ensure
@@ -380,20 +429,18 @@ class UnisonHandler():
         none
 
         """
-        # Set some tmp data
-        self.data_storage.set_data("key", {"pid": 11110, "syncname": "key0"})
-
         # Get the list of processes we know are running and we think are running
         actually_running_processes = self.get_running_unison_processes()
         supposedly_running_processes = self.data_storage.running_data
-        print(supposedly_running_processes)
-        dead_pids = list(
+        dead_instances = list(
             set(supposedly_running_processes) - set(actually_running_processes)
         )
 
-        print(dead_pids)
-
-        # TODO: Handle these
+        # Remove data on dead instances
+        for instance_id in dead_instances:
+            if(self.DEBUG):
+                print("Removing: " + str(supposedly_running_processes[instance_id]))
+            self.data_storage.remove_data(instance_id)
 
     def get_running_unison_processes(self):
         """Return PIDs of currently running unison instances.
@@ -466,6 +513,7 @@ class UnisonHandler():
             'unison_local_root',
             'unison_remote_root',
             'unison_path',
+            'global_unison_config_options',
         }
 
         # If a setting contains a directory path, add it's key here and it will
@@ -483,6 +531,7 @@ class UnisonHandler():
             'log_file': '/dev/null',
             'make_root_directories_if_not_found': True,
             'unison_path': '/usr/bin/unison',  # Default ubuntu path for unison
+
         }
 
         # Convert config file into dict
@@ -512,7 +561,7 @@ class UnisonHandler():
         # A few hardcoded config values
         self.config['data_dir'] = self.config['data_dir'] + os.sep + "running-sync-instances"
 
-        # If you reach here, configuration was read without error.
+        # If you reach here, configuration was read and imported without error
         return
 
     def sanatize_path(self, path):
