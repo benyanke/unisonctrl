@@ -315,10 +315,7 @@ class UnisonHandler():
         )
 
         # Check if SSH config key is specified
-        if (
-            self.config['unison_remote_ssh_keyfile'] is None or
-            self.config['unison_remote_ssh_keyfile'] == ""
-        ):
+        if self.config['unison_remote_ssh_keyfile'] == "":
             # Key is not specified, use it
             if self.DEBUG:
                 print("Key not specified")
@@ -474,6 +471,7 @@ class UnisonHandler():
         """
         # Get the list of processes we know are running and we think are running
         actually_running_processes = self.get_running_unison_processes()
+
         supposedly_running_processes = self.data_storage.running_data
         dead_instances = list(
             set(supposedly_running_processes) - set(actually_running_processes)
@@ -482,7 +480,10 @@ class UnisonHandler():
         # Remove data on dead instances
         for instance_id in dead_instances:
             if(self.DEBUG):
-                print("Removing, because it's dead: " + str(supposedly_running_processes[instance_id]['syncname']))
+                print(
+                    "Removing, because it's dead: " +
+                    str(supposedly_running_processes[instance_id]['syncname'])
+                )
             self.data_storage.remove_data(instance_id)
 
     def get_running_unison_processes(self):
@@ -572,8 +573,7 @@ class UnisonHandler():
             'log_file': '/dev/null',
             'make_root_directories_if_not_found': True,
             'unison_path': '/usr/bin/unison',  # Default ubuntu path for unison
-            'unison_remote_ssh_keyfile': None,
-
+            'unison_remote_ssh_keyfile': "",
         }
 
         # Convert config file into dict

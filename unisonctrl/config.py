@@ -20,6 +20,7 @@ unison_remote_root = "/mnt/local/pcnart"
 # typical example: 'jdoe@example.com'
 # another valid example, paired with ~/.ssh/config entry: 'syncserver'
 unison_remote_ssh_conn = "aws-artshare-sync"
+# unison_remote_ssh_conn = "aws-artshare-appserver"
 
 # This keyfile will be specified if this is set
 # unison_remote_ssh_keyfile = "/home/syncd/.ssh/keys/pcnartsync_unison_key"
