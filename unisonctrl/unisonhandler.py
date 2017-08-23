@@ -61,7 +61,10 @@ class UnisonHandler():
         self.import_config()
 
         # Set up data storage backend
-        self.data_storage = DataStorage(self.DEBUG, self.config)
+#        self.data_storage = DataStorage(self.DEBUG, self.config)
+
+        # Disabling debugging on the storage layer, it's no longer needed
+        self.data_storage = DataStorage(False, self.config)
 
         if(self.DEBUG):
             print("Constructor complete")
@@ -306,6 +309,8 @@ class UnisonHandler():
             self.config['global_unison_config_options']
         )
 
+        print(requested_instance)
+
         print(" ".join(cmd))
 
         running_instance = subprocess.Popen(
@@ -440,7 +445,7 @@ class UnisonHandler():
         # Remove data on dead instances
         for instance_id in dead_instances:
             if(self.DEBUG):
-                print("Removing: " + str(supposedly_running_processes[instance_id]))
+                print("Removing, because it's dead: " + str(supposedly_running_processes[instance_id]['syncname']))
             self.data_storage.remove_data(instance_id)
 
     def get_running_unison_processes(self):
