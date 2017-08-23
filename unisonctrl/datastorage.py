@@ -139,7 +139,14 @@ class DataStorage():
         if key in self.running_data:
             del self.running_data[key]
 
-        os.remove(self.config['data_dir'] + os.sep + key + ".json")
+        # If file exists in filesystem, delete it
+        file_to_remove = self.config['data_dir'] + os.sep + key + ".json"
+
+        if os.path.isfile(file_to_remove):
+            os.remove(file_to_remove)
+
+        # Data has been removed from memory and filesystem
+        return
 
     def import_file_data(self):
         """Prepare UnisonHandler to manage unison instances.
