@@ -547,8 +547,6 @@ class UnisonHandler():
         # If there are rows in the config file which are not listed here, an
         # error will be raised
         validSettings = {
-            'unison_config_template_dir',
-            'unison_config_dir',
             'data_dir',
             'log_file',
             'make_root_directories_if_not_found',
@@ -564,8 +562,6 @@ class UnisonHandler():
         # If a setting contains a directory path, add it's key here and it will
         # be sanatized (whitespace and trailing whitespaces stripped)
         settingPathsToSanitize = {
-            'unison_config_template_dir',
-            'unison_config_dir',
             'data_dir',
         }
 
