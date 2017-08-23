@@ -70,7 +70,6 @@ class UnisonHandler():
             print("Constructor complete")
 
         self.cleanup_dead_processes()
-        self.create_all_sync_instances()
 
     """
 
@@ -308,11 +307,15 @@ class UnisonHandler():
 
         # Convert SSH config info into connection string
         remote_path_connection_string = (
+            "" +
             "ssh://" +
             str(self.config['unison_remote_ssh_conn']) +
             "/" +
-            str(self.config['unison_remote_root'])
+            str(self.config['unison_remote_root']) +
+            ""
         )
+
+        print(remote_path_connection_string)
 
         # Check if SSH config key is specified
         if self.config['unison_remote_ssh_keyfile'] == "":
@@ -327,7 +330,7 @@ class UnisonHandler():
 
             remote_path_connection_string = (
                 remote_path_connection_string +
-                " -ssshargs='-i " +
+                " -sshargs='-i " +
                 self.config['unison_remote_ssh_keyfile'] +
                 "'"
             )
@@ -337,10 +340,9 @@ class UnisonHandler():
         # Start unison
         cmd = (
             [self.config['unison_path']] +
-            ["'" + str(self.config['unison_local_root']) + "'"] +
+            ["" + str(self.config['unison_local_root']) + ""] +
             [remote_path_connection_string] +
-            dirs_for_unison +
-            self.config['global_unison_config_options']
+            dirs_for_unison  # + self.config['global_unison_config_options']
         )
 
         print(requested_instance)
@@ -692,3 +694,4 @@ class UnisonHandler():
 
 # tmp : make this more robust
 US = UnisonHandler(True)
+US.create_all_sync_instances()
