@@ -696,4 +696,3 @@ class UnisonHandler():
 
 # tmp : make this more robust
 US = UnisonHandler(True)
-US.get_running_unison_processes()
