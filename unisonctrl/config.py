@@ -16,7 +16,19 @@ unison_config_template_dir = "/opt/unison/config/templates"
 # Define unsion root directories
 # unison_local_root="/mnt/local/pcnart"
 unison_local_root = "/mnt/network-shares/pcnart"
+
+# Note: this script uses ssh to connect
+
+# Absolute path
 unison_remote_root = "/mnt/local/pcnart"
+
+# SSH connection string
+# typical example: 'jdoe@example.com'
+# another valid example, paired with ~/.ssh/config entry: 'syncserver'
+unison_remote_ssh_conn = "byanke@remote"
+
+# This keyfile will be specified if this is set
+unison_remote_ssh_keyfile = ""
 
 # Path to unison if we can not find it by default
 # unison_path="/usr/bin/unison"

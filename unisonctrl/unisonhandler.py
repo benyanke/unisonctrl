@@ -300,11 +300,48 @@ class UnisonHandler():
             # Append to list for config storage
             trimmed_dirs.append(dir_trimmed)
 
+        # Basic verification check (by no means complete)
+
+        # Ensure local root exists
+        if not os.path.isdir(self.config['unison_local_root']):
+            raise IOError("Local root directory does not exist")
+
+        # Convert SSH config info into connection string
+        remote_path_connection_string = (
+            "ssh://" +
+            str(self.config['unison_remote_ssh_conn']) +
+            "/" +
+            str(self.config['unison_remote_root'])
+        )
+
+        # Check if SSH config key is specified
+        if (
+            self.config['unison_remote_ssh_keyfile'] is None or
+            self.config['unison_remote_ssh_keyfile'] == ""
+        ):
+            # Key is not specified, use it
+            if self.DEBUG:
+                print("Key not specified")
+
+        else:
+            # Key is specified
+            if self.DEBUG:
+                print("Key specified: " + self.config['unison_remote_ssh_keyfile'])
+
+            remote_path_connection_string = (
+                remote_path_connection_string +
+                " -ssshargs='-i " +
+                self.config['unison_remote_ssh_keyfile'] +
+                "'"
+            )
+
+        print(remote_path_connection_string)
+
         # Start unison
         cmd = (
             [self.config['unison_path']] +
             ["'" + str(self.config['unison_local_root']) + "'"] +
-            ["'" + str(self.config['unison_remote_root']) + "'"] +
+            [remote_path_connection_string] +
             dirs_for_unison +
             self.config['global_unison_config_options']
         )
@@ -520,6 +557,8 @@ class UnisonHandler():
             'unison_remote_root',
             'unison_path',
             'global_unison_config_options',
+            'unison_remote_ssh_conn',
+            'unison_remote_ssh_keyfile',
         }
 
         # If a setting contains a directory path, add it's key here and it will
@@ -537,6 +576,7 @@ class UnisonHandler():
             'log_file': '/dev/null',
             'make_root_directories_if_not_found': True,
             'unison_path': '/usr/bin/unison',  # Default ubuntu path for unison
+            'unison_remote_ssh_keyfile': None,
 
         }
 
