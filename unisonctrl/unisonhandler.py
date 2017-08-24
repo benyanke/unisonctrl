@@ -324,7 +324,7 @@ class UnisonHandler():
             dir_trimmed = dir[amount_to_clip:]
 
             # Format for unison command line args
-            pathstr = "-path='" + dir_trimmed + "'"
+            pathstr = "-path=\"" + dir_trimmed + "\""
 
             # Append to list for args
             dirs_for_unison.append(pathstr)

@@ -101,7 +101,7 @@ sync_hierarchy_rules = [
         # You can also use offset to start the count down the list. For
         # example,this search would capture directores 4-6 in the search,
         # because after implementing the offset of 3, they are the next 3
-        "sort_count": 3,
+        "sort_count": 2,
     },
 
 
@@ -144,7 +144,7 @@ sync_hierarchy_rules = [
         # NOTE: This option not yet implemented
         # This generates ignore statements for each of the directories
         # already handled in other instances, to ensure no overlap
-        "include_ignores": True,
+        # "include_ignores": True,
     },
 ]
 
@@ -170,11 +170,11 @@ global_unison_config_options = [
     # Retry params
     "-retry=10",
     "-perms=0",
-    "-repeat=1",
+    "-repeat=5",
 
     # Not entirely sure what these do, so....
-    "-maxerrors=20",
-    "-contactquietly",
+    # "-maxerrors=20",
+    # "-contactquietly",
     "-dumbtty",
 
     # Run interaction-free
