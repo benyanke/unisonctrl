@@ -61,7 +61,7 @@ sync_hierarchy_rules = [
     {
         # Name = of the unison profile which will be created
         # can be any alphanumeric string (a-z, A-Z, 1-9) to identify the sync
-        "syncname": "recent-phone-orders-batch-1",
+        "syncname": "recent-phone-orders-batch-1a",
 
         # Select the directories which will be synced with this profile
         # Use standard shell globbing to select files from the root directory

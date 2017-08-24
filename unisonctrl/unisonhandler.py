@@ -386,7 +386,7 @@ class UnisonHandler():
         instance_info = {
             "pid": running_instance_pid,
             "syncname": instance_name,
-            "confighash": config_hash,
+            "config_hash": config_hash,
             "dirs_to_sync": trimmed_dirs
         }
 
@@ -505,31 +505,57 @@ class UnisonHandler():
 
         """
         # Get the list of processes we know are running and we think are running
-        actually_running_processes = self.get_running_unison_processes()
-        print(actually_running_processes)
+        # Also, convert each PID to int to make sure we can compare
+        actually_running_processes = list(map(int, self.get_running_unison_processes()))
 
-        supposedly_running_processes = self.data_storage.running_data
-        dead_instances = list(
-            set(supposedly_running_processes) - set(actually_running_processes)
-        )
+        l = self.data_storage.running_data
+        supposedly_running_processes = [int(l[d]['pid']) for d in l]
 
-        print("supposedly_running:")
-        print(supposedly_running_processes)
-        print("\n\nactually_running_processes:")
-        print(actually_running_processes)
+        # Find which instances we think are running but aren't
+        dead_instances = [x for x in supposedly_running_processes if x not in actually_running_processes]
 
-        print("\n\ndead_instances:")
-        print(dead_instances)
-        exit()
+        if(self.DEBUG):
+            print("supposedly_running:")
+            print(supposedly_running_processes)
+            print("\n\nactually_running_processes:")
+            print(actually_running_processes)
+
+            print("\n\ndead_instances:")
+            print(dead_instances)
 
         # Remove data on dead instances
         for instance_id in dead_instances:
+            process = self.get_process_info_by_pid(instance_id)
+
             if(self.DEBUG):
                 print(
                     "Removing, because it's dead: " +
-                    str(supposedly_running_processes[instance_id])
+                    str(process['syncname'])
                 )
-            self.data_storage.remove_data(instance_id)
+            self.data_storage.remove_data(process['syncname'])
+
+    def get_process_info_by_pid(self, pid):
+        """Return the syncname of a process given it's PID.
+
+        Parameters
+        ----------
+        int
+            PID of desired process
+
+
+        Returns
+        -------
+        dict
+            the full details of the sync process specified by the PID
+
+        Throws
+        -------
+        none
+
+        """
+        for process in self.data_storage.running_data:
+            if self.data_storage.running_data[process]['pid'] == pid:
+                return self.data_storage.running_data[process]
 
     def get_running_unison_processes(self):
         """Return PIDs of currently running unison instances.
@@ -552,7 +578,7 @@ class UnisonHandler():
         # Get PIDs
         # Note: throws exception if no instances exist
         try:
-            pids = str(subprocess.check_output(["pidof", 'unison']))
+            pids = str(subprocess.check_output(["pidof", '/usr/bin/unison']))
 
             # Parse command output into list by removing junk chars and exploding
             # string with space delimiter
@@ -741,4 +767,7 @@ class UnisonHandler():
 
 # tmp : make this more robust
 US = UnisonHandler(True)
+
+# US.kill_instance_by_pid(8728)
+
 US.create_all_sync_instances()
