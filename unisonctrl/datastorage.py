@@ -141,7 +141,7 @@ class DataStorage():
             print("KEY " + key + " deleted")
 
         # If file exists in filesystem, delete it
-        file_to_remove = self.config['data_dir'] + os.sep + key + ".json"
+        file_to_remove = self.config['running_data_dir'] + os.sep + key + ".json"
 
         if os.path.isfile(file_to_remove):
             os.remove(file_to_remove)
@@ -170,45 +170,45 @@ class DataStorage():
 
         """
         # Ensure permissions are properly set before continuing
-        self.check_data_dir_permissions()
+        self.check_running_data_dir_permissions()
 
         # Make dir for pid files, if config allows it
         if (
-            (not os.path.exists(self.config['data_dir'])) and
+            (not os.path.exists(self.config['running_data_dir'])) and
             (self.config['make_root_directories_if_not_found'])
         ):
-            os.makedirs(self.config['data_dir'])
+            os.makedirs(self.config['running_data_dir'])
 
         # If directory doesn't exist and config doesn't allow new ones to be
         # created, throw exception
-        elif (not os.path.exists(self.config['data_dir'])):
+        elif (not os.path.exists(self.config['running_data_dir'])):
             raise IOError(
-                "The directory '" + self.config['data_dir'] + "' does not " +
+                "The directory '" + self.config['running_data_dir'] + "' does not " +
                 "and auto-creation is disabled")
 
         # Make directory for json files
-        if not os.path.exists(self.config['data_dir']):
-            os.makedirs(self.config['data_dir'])
+        if not os.path.exists(self.config['running_data_dir']):
+            os.makedirs(self.config['running_data_dir'])
 
         # Get files by extension
         json_data_files = glob.glob(
-            self.config['data_dir'] + os.sep + "*.json"
+            self.config['running_data_dir'] + os.sep + "*.json"
         )
 
         if(self.DEBUG):
-            all_data_files = glob.glob(self.config['data_dir'] + os.sep + "*")
+            all_data_files = glob.glob(self.config['running_data_dir'] + os.sep + "*")
             extra_files = list(set(all_data_files) - set(json_data_files))
 
             if len(extra_files) > 0:
                 print(
                     "There are unrecognized files in '" +
-                    self.config['data_dir'] + ":\n    * " +
+                    self.config['running_data_dir'] + ":\n    * " +
                     "\n    * ".join(extra_files) + "\n\n"
                 )
 
         # Calculates the list of uncategorized_files
         # Uncomment this if needed
-        # all_files = glob.glob(self.config['data_dir'] + "/*")
+        # all_files = glob.glob(self.config['running_data_dir'] + "/*")
         # uncategorized_files = list(set(all_files) - set(json_data_files))
 
         # Loop through json files and import their content into
@@ -242,10 +242,10 @@ class DataStorage():
 
         return self.running_data
 
-    def check_data_dir_permissions(self):
-        """Check 'data_dir' to ensure proper permissions are set.
+    def check_running_data_dir_permissions(self):
+        """Check 'running_data_dir' to ensure proper permissions are set.
 
-        This function checks the directory specified in 'data_dir' to ensure it
+        This function checks the directory specified in 'running_data_dir' to ensure it
         there are sufficient permissions to write, edit, and delete files.
 
         Parameters
@@ -263,7 +263,7 @@ class DataStorage():
         """
 
         # TODO: implementme
-        # raise IOError("The directory '" + self.config['data_dir'] + "' does not exist")
+        # raise IOError("The directory '" + self.config['running_data_dir'] + "' does not exist")
 
     def file_get_contents(self, filename):
         """Read a file, return it's content.
@@ -357,7 +357,7 @@ class DataStorage():
         """Write running data to tmp data files.
 
         This function writes the contents of self.running_data to json files in
-        config['data_dir'].
+        config['running_data_dir'].
 
         Paramaters
         -------
@@ -392,7 +392,7 @@ class DataStorage():
                 )
 
             self.file_put_contents(
-                self.config['data_dir'] + os.sep + key + ".json",
+                self.config['running_data_dir'] + os.sep + key + ".json",
                 json.dumps(self.running_data[key])
             )
 

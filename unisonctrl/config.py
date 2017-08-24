@@ -61,7 +61,7 @@ sync_hierarchy_rules = [
     {
         # Name = of the unison profile which will be created
         # can be any alphanumeric string (a-z, A-Z, 1-9) to identify the sync
-        "syncname": "recent-phone-orders-batch-1a",
+        "syncname": "recent-phone-orders-batch-1",
 
         # Select the directories which will be synced with this profile
         # Use standard shell globbing to select files from the root directory
@@ -78,9 +78,74 @@ sync_hierarchy_rules = [
         "sort_method": "name_highfirst",
         # Select X from the top of the list you sorted above
         # "sort_count": 4,
-        "sort_count": 1,
+        "sort_count": 3,
     },
 
+    # Sync the 3 highest-counted folders starting with "11" in their
+    # own unison instance
+    {
+        "syncname": "recent-phone-orders-batch-2",
+        "dir_selector": "Art Department/11*",
+        "sort_method": "name_highfirst",
+
+        "sort_count": 8,
+    },
+
+    # Sync the 3 highest-counted folders starting with "M" in their
+    # own unison instance
+    {
+        "syncname": "recent-magento-orders-batch-1",
+        "dir_selector": "Art Department/M0*",
+        "sort_method": "name_highfirst",
+
+        # You can also use offset to start the count down the list. For
+        # example,this search would capture directores 4-6 in the search,
+        # because after implementing the offset of 3, they are the next 3
+        "sort_count": 3,
+    },
+
+
+    # Sync the next 6 highest-counted folders starting with "M" in their
+    # own unison instance
+    {
+        "syncname": "recent-magento-orders-batch-2",
+        "dir_selector": "Art Department/M0*",
+        "sort_method": "name_highfirst",
+
+        # You can also use offset to start the count down the list. For
+        # example,this search would capture directores 4-6 in the search,
+        # because after implementing the offset of 3, they are the next 3
+        "sort_count": 6,
+    },
+
+    # Sync the 3 highest-counted folders starting with 'O' in their
+    # own unison instance
+    {
+        "syncname": "recent-web-orders-batch-1",
+        "dir_selector": "Art Department/O*",
+        "sort_method": "name_highfirst",
+        "sort_count": 3,
+    },
+
+    # Sync the next 3 highest-counted folders starting with 'O' in their
+    # own unison instance
+    {
+        "syncname": "recent-web-orders-batch-2",
+        "dir_selector": "Art Department/O*",
+        "sort_method": "name_highfirst",
+        "sort_count": 6,
+    },
+
+    # Sync any files not caught above in their own instance
+    {
+        "syncname": "catch-all",
+        "dir_selector": "*",
+
+        # NOTE: This option not yet implemented
+        # This generates ignore statements for each of the directories
+        # already handled in other instances, to ensure no overlap
+        "include_ignores": True,
+    },
 ]
 
 # These options are passed through to unison on every run

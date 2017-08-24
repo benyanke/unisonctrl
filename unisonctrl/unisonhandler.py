@@ -13,10 +13,11 @@ import glob
 import atexit
 import itertools
 import hashlib
-import time
+# import time
 import psutil
-import signal
-# import platform
+# import signal
+import platform
+import copy
 
 # For debugging
 # import shlex
@@ -65,7 +66,6 @@ class UnisonHandler():
         self.import_config()
 
         # Set up data storage backend
-#        self.data_storage = DataStorage(self.DEBUG, self.config)
 
         # Disabling debugging on the storage layer, it's no longer needed
         self.data_storage = DataStorage(False, self.config)
@@ -127,11 +127,35 @@ class UnisonHandler():
         none
 
         """
+        # Get directories to sync
         dirs_to_sync_by_sync_instance = self.get_dirs_to_sync(self.config['sync_hierarchy_rules'])
+
+        # Store all known running sync instances here to potentially kill later
+        # unhandled_sync_instances = copy.deepcopy(dirs_to_sync_by_sync_instance)
+        unhandled_sync_instances = copy.deepcopy(self.data_storage.running_data)
+
+        # print("######## To maybe kill: ")
+        # print(unhandled_sync_instances)
 
         # Loop through each entry in the dict and create a sync instance for it
         for instance_name, dirs_to_sync in dirs_to_sync_by_sync_instance.items():
+
+            # Mark this instance as handled so it's not killed later
+            unhandled_sync_instances.pop(instance_name, None)
+
+            # print("######## Not neededing to kill:")
+            # print(instance_name)
+
+            # Make new sync instance
             self.create_sync_instance(instance_name, dirs_to_sync)
+
+        # print("######## To kill: ")
+        # print(unhandled_sync_instances)
+
+        # Kill any instances in unhandled_sync_instances, because they are
+        # no longer required needed
+        for inst_to_kill in unhandled_sync_instances:
+            self.kill_sync_instance_by_pid(self.data_storage.running_data[inst_to_kill]['pid'])
 
     def get_dirs_to_sync(self, sync_hierarchy_rules):
         """Start a new sync instance with provided details.
@@ -180,7 +204,8 @@ class UnisonHandler():
                 'overlap' not in sync_instance or
                 sync_instance['overlap'] is False
             ):
-                print("NO OVERLAP ALLOWED")
+                if(self.DEBUG):
+                    print("NO OVERLAP ALLOWED")
                 before = len(all_dirs_from_glob)
                 all_unhandled_dirs_from_glob = [x for x in all_dirs_from_glob if x not in handled_dirs]
                 after = len(all_unhandled_dirs_from_glob)
@@ -281,7 +306,7 @@ class UnisonHandler():
             if(self.DEBUG):
                 print("Instance data found for " + instance_name + " - using different config, killing and restarting")
 
-            self.kill_instance_by_pid(requested_instance['pid'])
+            self.kill_sync_instance_by_pid(requested_instance['pid'])
             self.data_storage.remove_data(requested_instance['syncname'])
 
         # Process dirs into a format for unison command line arguments
@@ -349,7 +374,6 @@ class UnisonHandler():
             dirs_for_unison + self.config['global_unison_config_options']
         )
 
-        #        print(requested_instance)
         print(cmd)
 
         print(" ".join(cmd))
@@ -397,8 +421,8 @@ class UnisonHandler():
 
         print(self.data_storage.running_data)
 
-    def kill_instance_by_pid(self, pid):
-        """Kill unison instance by PID.
+    def kill_sync_instance_by_pid(self, pid):
+        """Kill unison instance by it's PID.
 
         Includes build in protection for accidentally killing a non-unison
         program, and even other unison programs not started with this script
@@ -426,62 +450,82 @@ class UnisonHandler():
         """
         # Get the list of known pids to ensure we only kill one of those
         running_data = self.data_storage.running_data
-        # print(running_data)
+
+        if(self.DEBUG):
+            print("Attempting to kill PID " + str(pid))
 
         known_pids = []
 
-        # TODO: Rewrite this function, it can probably be done with reduce()
         # Gets PIDs of all the known unison processes
-        for entry in running_data:
-            running_data[entry]
-            known_pids.append(int(running_data[entry]['pid']))
+        known_pids = [int(running_data[d]['pid']) for d in running_data]
+
+        # TODO: Rewrite this function, it can probably be done with reduce()
+        # RESOLUTION: Rewritten above, this kept in case it doesn't work
+        # for entry in running_data:
+        #    running_data[entry]
+        #    known_pids.append(int(running_data[entry]['pid']))
 
         # TODO: Finish this error checking logic here, currently it doesn't check the PID
 
+        print("PID: " + str(pid))
+        print("known_pids: " + str(known_pids))
+
         # Try and kill with sigint (same as ctrl+c), if we are allowed to
-        if pid not in known_pids:
-            msg = "Process ID:" + str(pid) + " is not in our list of known PIDs - refusing to kill"
-            raise RuntimeError(msg)
 
-        else:
-
-            # Only kill PID if it exists
-            if psutil.pid_exists(pid):
-                os.kill(pid, signal.SIGINT)
-            else:
-                if(self.DEBUG):
-                    print("Process " + str(pid) + " does not exist")
-
-        # Keep checkig to see if dead yet
-        for _ in range(20):
-
-            if psutil.pid_exists(pid):
-                # If still alive, keep waiting and try again
-                time.sleep(.300)
-            else:
-                # If dead, exit function
-                return
-
-        # If it did not die nicely, get subsequently more strong about killing it
-        p = psutil.Process(pid)
-
-        if psutil.pid_exists(pid):
-            p.terminate()
-        else:
+        # First make sure the process exists
+        if not psutil.pid_exists(pid):
             return
 
-        time.sleep(.300)
+        # Then make sure it's a process we started
+        elif pid not in known_pids:
+            msg = "Process " + str(pid) + " is not managed by UnisonCTRL - refusing to kill"
+            raise RuntimeError(msg)
 
-        for _ in range(20):
+        # Finally, kill the process if it exists and we started it
+        else:
+            return self.kill_pid(pid)
 
-            if psutil.pid_exists(pid):
-                # If still alive, keep waiting and try again
-                time.sleep(.300)
-                p.kill()
-            else:
-                # If dead, exit function
-                return
-        # TODO: log here - process couldn't be killed
+    def kill_pid(self, pid):
+        """Kill a process by it's PID.
+
+        Starts with SIGINT (ctrl + c), then waits 6 seconds, checking
+        every 1/3 second. If it doesn't die after 6 seconds, it is
+        attempted to be killed with psutil.terminate, then psutil.kill.
+
+        Parameters
+        ----------
+        int
+            PID of a process to kill
+
+        Returns
+        -------
+        list[int]
+            PIDs of unison instances, empty list
+
+        Throws
+        -------
+        none
+
+        """
+        # Ensure it still exists before continuing
+        if not psutil.pid_exists(pid):
+            return
+
+        # If it did not die nicely, get stronger about killing it
+        p = psutil.Process(pid)
+
+        # Try terminating, wait 3 seconds to see if it dies
+        p.terminate()  # SIGTERM
+        psutil.wait_procs([p], timeout=3)
+
+        # Ensure it still exists before continuing
+        if not psutil.pid_exists(pid):
+            return
+
+        # Try hard killing, wait 3 seconds to see if it dies
+        p.kill()  # SIGKILL
+        psutil.wait_procs([p], timeout=3)
+
         return
 
     def cleanup_dead_processes(self):
@@ -506,8 +550,7 @@ class UnisonHandler():
         """
         # Get the list of processes we know are running and we think are running
         # Also, convert each PID to int to make sure we can compare
-        actually_running_processes = list(map(int, self.get_running_unison_processes()))
-
+        actually_running_processes = self.get_running_unison_processes()
         l = self.data_storage.running_data
         supposedly_running_processes = [int(l[d]['pid']) for d in l]
 
@@ -567,7 +610,7 @@ class UnisonHandler():
 
         Returns
         -------
-        list
+        list[int]
             PIDs of unison instances, empty list
 
         Throws
@@ -591,7 +634,8 @@ class UnisonHandler():
         if self.DEBUG:
             print("Found " + str(len(pids)) + " running instances on this system: " + str(pids))
 
-        return pids
+        # Return, after converting to ints
+        return list(map(int, pids))
 
     def import_config(self):
         """Import config from config, and apply details where needed.
@@ -615,11 +659,19 @@ class UnisonHandler():
         # Get all keys from keyvalue pairs in the config file
         settingsFromConfigFile = [x for x in dir(config) if not x.startswith('__')]
 
+        # Convert config file into dict
+        for key in settingsFromConfigFile:
+            value = getattr(config, key)
+            self.config[key] = value
+
         # Settings validation: specify keys which are valid settings
         # If there are rows in the config file which are not listed here, an
         # error will be raised
         validSettings = {
             'data_dir',
+            'running_data_dir',
+            'unison_log_dir',
+            'unisonctrl_log_dir',
             'log_file',
             'make_root_directories_if_not_found',
             'sync_hierarchy_rules',
@@ -638,23 +690,24 @@ class UnisonHandler():
         settingPathsToSanitize = {
             'data_dir',
             'unison_home_dir',
+            'running_data_dir',
+            'unison_log_dir',
+            'unisonctrl_log_dir',
         }
 
         # Values here are used as config values unless overridden in the
         # config.py file
         defaultSettings = {
-            'data_dir': '/var/run/unisonctrld',
+            'data_dir': '/tmp/unisonctrl',
             'log_file': '/dev/null',
             'make_root_directories_if_not_found': True,
             'unison_path': '/usr/bin/unison',  # Default ubuntu path for unison
             'unison_remote_ssh_keyfile': "",
-            # 'unison_local_hostname': platform.node(),
+            'unison_local_hostname': platform.node(),
+            'running_data_dir': self.config['data_dir'] + os.sep + "running-sync-instance-information",
+            'unison_log_dir': self.config['data_dir'] + os.sep + "unison-logs",
+            'unisonctrl_log_dir': self.config['data_dir'] + os.sep + "unisonctrl-logs",
         }
-
-        # Convert config file into dict
-        for key in settingsFromConfigFile:
-            value = getattr(config, key)
-            self.config[key] = value
 
         # Apply default settings to fill gaps between explicitly set ones
         for key in defaultSettings:
@@ -674,9 +727,6 @@ class UnisonHandler():
         # Sanatize directory paths
         for key in settingPathsToSanitize:
             self.config[key] = self.sanatize_path(self.config[key])
-
-        # A few hardcoded config values
-        self.config['data_dir'] = self.config['data_dir'] + os.sep + "running-sync-instances"
 
         # If you reach here, configuration was read and imported without error
         return
@@ -764,10 +814,13 @@ class UnisonHandler():
                 self.__class__.__name__
             )
 
+        print("Exiting")
+
 
 # tmp : make this more robust
 US = UnisonHandler(True)
+# US = UnisonHandler(False)
 
-# US.kill_instance_by_pid(8728)
+# US.kill_sync_instance_by_pid(11701)
 
 US.create_all_sync_instances()
