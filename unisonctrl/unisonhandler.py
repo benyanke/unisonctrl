@@ -6,6 +6,7 @@
 #
 
 # TODO: Replace DEBUG var with an actual logging framework, including log level
+# TODO: turn from hardcoded program into a command line utility
 
 import subprocess
 import os
@@ -37,6 +38,9 @@ class UnisonHandler():
     # Enables extra output
     DEBUG = True
 
+    # self.config['unisonctrl_log_dir'] + os.sep + "unisonctrl.log"
+    # self.config['unisonctrl_log_dir'] + os.sep + "unisonctrl.error"
+
     def __init__(self, debug=DEBUG):
         """Prepare UnisonHandler to manage unison instances.
 
@@ -56,14 +60,14 @@ class UnisonHandler():
         -------
 
         """
-        # Register exit handler
-        atexit.register(self.exit_handler)
-
         # Handle manual debug setting
         self.DEBUG = debug
 
         # Set up configuration
         self.import_config()
+
+        # Register exit handler
+        atexit.register(self.exit_handler)
 
         # Set up data storage backend
 
@@ -378,33 +382,22 @@ class UnisonHandler():
 
         print(" ".join(cmd))
 
-        # running_instance = subprocess.Popen(
-        #     cmd,
-        #     stdin=None, stdout=None, stderr=None, close_fds=True
-        # )
-
         print(self.config['unison_home_dir'])
-        #        exit()
 
-        #        running_instance = subprocess.Popen(
-        #            cmd,
-        #            stdin=None, stdout=None, stderr=None, close_fds=True,
-        #            env={
-        #                'UNISONLOCALHOSTNAME': self.config['unison_local_hostname'],
-        #                'HOME': self.config['unison_home_dir'],
-        #            }
-        #        )
+        mainlog = self.config['unison_log_dir'] + os.sep + instance_name + ".log"
+        errorlog = self.config['unison_log_dir'] + os.sep + instance_name + ".error"
 
-        running_instance_pid = subprocess.Popen(
-            cmd,
-            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,  # close_fds=True,
-            env={
-                'UNISONLOCALHOSTNAME': self.config['unison_local_hostname'],
-                'HOME': self.config['unison_home_dir'],
-            }
-        ).pid
+        with open(mainlog, "wb") as out, open(errorlog, "wb") as err:
+            running_instance_pid = subprocess.Popen(
+                cmd,
+                stdin=subprocess.DEVNULL, stdout=out, stderr=err,  # close_fds=True,
+                env={
+                    'UNISONLOCALHOSTNAME': self.config['unison_local_hostname'],
+                    'HOME': self.config['unison_home_dir'],
+                }
+            ).pid
 
-        print("PID: " + str(running_instance_pid))
+        print("PID: " + str(running_instance_pid) + " now running")
         # exit()
 
         instance_info = {
@@ -466,9 +459,6 @@ class UnisonHandler():
         #    known_pids.append(int(running_data[entry]['pid']))
 
         # TODO: Finish this error checking logic here, currently it doesn't check the PID
-
-        print("PID: " + str(pid))
-        print("known_pids: " + str(known_pids))
 
         # Try and kill with sigint (same as ctrl+c), if we are allowed to
 
@@ -707,6 +697,7 @@ class UnisonHandler():
             'running_data_dir': self.config['data_dir'] + os.sep + "running-sync-instance-information",
             'unison_log_dir': self.config['data_dir'] + os.sep + "unison-logs",
             'unisonctrl_log_dir': self.config['data_dir'] + os.sep + "unisonctrl-logs",
+
         }
 
         # Apply default settings to fill gaps between explicitly set ones
@@ -813,8 +804,6 @@ class UnisonHandler():
                 "Script shutdown complete in class " +
                 self.__class__.__name__
             )
-
-        print("Exiting")
 
 
 # tmp : make this more robust

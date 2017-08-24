@@ -54,7 +54,7 @@ class DataStorage():
         atexit.register(self.exit_handler)
 
         # Get data associated with running unison instances
-        self.import_file_data()
+        self.read_data_from_filesystem()
 
     def get_data(self, key):
         """Getter method for the data.
@@ -150,7 +150,7 @@ class DataStorage():
         # Data has been removed from memory and filesystem
         return
 
-    def import_file_data(self):
+    def read_data_from_filesystem(self):
         """Prepare UnisonHandler to manage unison instances.
 
         Parameters
@@ -189,6 +189,14 @@ class DataStorage():
         # Make directory for json files
         if not os.path.exists(self.config['running_data_dir']):
             os.makedirs(self.config['running_data_dir'])
+
+        # Make directory for unison logs
+        if not os.path.exists(self.config['unison_log_dir']):
+            os.makedirs(self.config['unison_log_dir'])
+
+        # Make directory for unisonctrl logs
+        if not os.path.exists(self.config['unisonctrl_log_dir']):
+            os.makedirs(self.config['unisonctrl_log_dir'])
 
         # Get files by extension
         json_data_files = glob.glob(
