@@ -7,9 +7,25 @@
 # somewhere in /var/run, or /tmp
 data_dir = "/tmp/unisonctrl"
 
+# This is where unison will store data which *DOES* need to persist. Typically
+# easiest to pass the home directory of the running user, or a folder in /opt
+# or /var
+unison_home_dir = "/home/syncd"
+
 # Define unsion root directories
 # unison_local_root="/mnt/local/pcnart"
 unison_local_root = "/mnt/lan/pcnart"
+
+
+# This is used by unison to properly set the local hostname
+# Unison will do a complete rescan every time this changes, and it needs to be
+# different than the remote hostname. Typically it should be set to the same
+# as the system's hostname, but it can really be any alphanumerics str.
+#
+# By default, you don't need this, but sometimes you might, if unison isn't
+# working without it. By default, it is the system hostname as found by
+# platform.node().
+unison_local_hostname = "pcnartsync"
 
 # Note: this script uses ssh to connect
 
@@ -61,7 +77,8 @@ sync_hierarchy_rules = [
         #   creation_date_lowfirst
         "sort_method": "name_highfirst",
         # Select X from the top of the list you sorted above
-        "sort_count": 4,
+        # "sort_count": 4,
+        "sort_count": 1,
     },
 
 ]
@@ -69,10 +86,10 @@ sync_hierarchy_rules = [
 # These options are passed through to unison on every run
 global_unison_config_options = [
     # Test for space handling
-    # "copyquoterem=true",
+    # "-copyquoterem",
 
     # Propagate file modification times
-    "-times=true",
+    "-times",
 
     # Speeds up comparison
     "-fastcheck",
@@ -99,73 +116,11 @@ global_unison_config_options = [
     "-auto",
     "-batch",
 
-    # File ignore settings - these will not be synced
-    # swp files (often created by vim and nano)
-    "-ignore=\"Name {.*.swp}\"",
-    # hidden files (files starting with a dot are hidden in a unix env)
-    "-ignore=\"Name {.*}\"",
+    # Ignore lockfiles, since we'll be managing the processes ourselves
+    "-ignorelocks",
+    "-ignorearchives",
 
-    # Other unsyncable extensions
-    "-ignore=\"Name {*.tmp}\"",
-    "-ignore=\"Name {cifs*}\"",
-
-    # Linux extensions
-    "-ignore=\"Name {*~}\"",
-    "-ignore=\"Name {.fuse_hidden*}\"",
-    "-ignore=\"Name {.directory}\"",
-    "-ignore=\"Name {.Trash-*}\"",
-    "-ignore=\"Name {.nfs*}\"",
-
-    # Mac extensions
-    "-ignore=\"Name {*.DS_Store}\"",
-    "-ignore=\"Name {.AppleDouble}\"",
-    "-ignore=\"Name {.LSOverride}\"",
-    "-ignore=\"Name {._*}\"",
-    "-ignore=\"Name {.DocumentRevisions-V100}\"",
-    "-ignore=\"Name {.fseventsd}\"",
-    "-ignore=\"Name {.Spotlight-V100}\"",
-    "-ignore=\"Name {.TemporaryItems}\"",
-    "-ignore=\"Name {.Trashes}\"",
-    "-ignore=\"Name {.VolumeIcon.icns}\"",
-    "-ignore=\"Name {.com.apple.timemachine.donotpresent}\"",
-    "-ignore=\"Name {.AppleDB}\"",
-    "-ignore=\"Name {.AppleDesktop}\"",
-    "-ignore=\"Name {Network Trash Folder}\"",
-    "-ignore=\"Name {Temporary Items}\"",
-    "-ignore=\"Name {.apdisk}\"",
-    "-ignore=\"Name {*.DS_Store}\"",
-    "-ignore=\"Name {*.DS_Store}\"",
-    "-ignore=\"Name {*.DS_Store}\"",
-
-    # Windows extensions
-    "-ignore=\"Name {Thumbs.db}\"",
-    "-ignore=\"Name {ehthumbs.db}\"",
-    "-ignore=\"Name {ehthumbs_vista.db}\"",
-    "-ignore=\"Name {*.stackdump}\"",
-    "-ignore=\"Name {Desktop.ini}\"",
-    "-ignore=\"Name {$RECYCLE.BIN/}\"",
-    "-ignore=\"Name {*.cab}\"",
-    "-ignore=\"Name {*.msi}\"",
-    "-ignore=\"Name {*.msm}\"",
-    "-ignore=\"Name {*.msp}\"",
-    "-ignore=\"Name {*.lnk}\"",
-
-    # Software specific lock files
-    # Adobe InDesign
-    "-ignore=\"Name {*.idlk}\"",
-    # Adobe FrameMaker
-    "-ignore=\"Name {*.lck}\"",
-    # Microsoft Word
-    "-ignore=\"Name {~.doc*}\"",
-    # Microsoft Excel
-    "-ignore=\"Name {~$*.xls}\"",
-    "-ignore=\"Name {*.xlk}\"",
-    # Microsoft PowerPoint
-    "-ignore=\"Name {~$*.ppt}\"",
-    # Visio autosave temporary files
-    "-ignore=\"Name {*.~vsd*}\"",
-    # LibreOffice Lockfiles
-    "-ignore=\"Name {.~lock.*#}\"",
+    # TODO: Copy in entries from "ignores-to-add-back-later" before deployment
 
 ]
 

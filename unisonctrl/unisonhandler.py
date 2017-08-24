@@ -16,6 +16,10 @@ import hashlib
 import time
 import psutil
 import signal
+# import platform
+
+# For debugging
+# import shlex
 
 from datastorage import DataStorage
 
@@ -342,27 +346,56 @@ class UnisonHandler():
             [self.config['unison_path']] +
             ["" + str(self.config['unison_local_root']) + ""] +
             [remote_path_connection_string] +
-            dirs_for_unison  # + self.config['global_unison_config_options']
+            dirs_for_unison + self.config['global_unison_config_options']
         )
 
-        print(requested_instance)
+        #        print(requested_instance)
+        print(cmd)
 
         print(" ".join(cmd))
 
-        running_instance = subprocess.Popen(
+        # running_instance = subprocess.Popen(
+        #     cmd,
+        #     stdin=None, stdout=None, stderr=None, close_fds=True
+        # )
+
+        print(self.config['unison_home_dir'])
+        #        exit()
+
+        #        running_instance = subprocess.Popen(
+        #            cmd,
+        #            stdin=None, stdout=None, stderr=None, close_fds=True,
+        #            env={
+        #                'UNISONLOCALHOSTNAME': self.config['unison_local_hostname'],
+        #                'HOME': self.config['unison_home_dir'],
+        #            }
+        #        )
+
+        running_instance_pid = subprocess.Popen(
             cmd,
-            stdin=None, stdout=None, stderr=None, close_fds=True
-        )
+            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,  # close_fds=True,
+            env={
+                'UNISONLOCALHOSTNAME': self.config['unison_local_hostname'],
+                'HOME': self.config['unison_home_dir'],
+            }
+        ).pid
+
+        print("PID: " + str(running_instance_pid))
+        # exit()
 
         instance_info = {
-            "pid": running_instance.pid,
+            "pid": running_instance_pid,
             "syncname": instance_name,
             "confighash": config_hash,
             "dirs_to_sync": trimmed_dirs
         }
 
+        print(self.data_storage.running_data)
+
         # Store instance info
         self.data_storage.set_data(instance_name, instance_info)
+
+        print(self.data_storage.running_data)
 
     def kill_instance_by_pid(self, pid):
         """Kill unison instance by PID.
@@ -473,18 +506,28 @@ class UnisonHandler():
         """
         # Get the list of processes we know are running and we think are running
         actually_running_processes = self.get_running_unison_processes()
+        print(actually_running_processes)
 
         supposedly_running_processes = self.data_storage.running_data
         dead_instances = list(
             set(supposedly_running_processes) - set(actually_running_processes)
         )
 
+        print("supposedly_running:")
+        print(supposedly_running_processes)
+        print("\n\nactually_running_processes:")
+        print(actually_running_processes)
+
+        print("\n\ndead_instances:")
+        print(dead_instances)
+        exit()
+
         # Remove data on dead instances
         for instance_id in dead_instances:
             if(self.DEBUG):
                 print(
                     "Removing, because it's dead: " +
-                    str(supposedly_running_processes[instance_id]['syncname'])
+                    str(supposedly_running_processes[instance_id])
                 )
             self.data_storage.remove_data(instance_id)
 
@@ -560,12 +603,15 @@ class UnisonHandler():
             'global_unison_config_options',
             'unison_remote_ssh_conn',
             'unison_remote_ssh_keyfile',
+            'unison_local_hostname',
+            'unison_home_dir',
         }
 
         # If a setting contains a directory path, add it's key here and it will
         # be sanatized (whitespace and trailing whitespaces stripped)
         settingPathsToSanitize = {
             'data_dir',
+            'unison_home_dir',
         }
 
         # Values here are used as config values unless overridden in the
@@ -576,6 +622,7 @@ class UnisonHandler():
             'make_root_directories_if_not_found': True,
             'unison_path': '/usr/bin/unison',  # Default ubuntu path for unison
             'unison_remote_ssh_keyfile': "",
+            # 'unison_local_hostname': platform.node(),
         }
 
         # Convert config file into dict
