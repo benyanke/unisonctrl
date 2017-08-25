@@ -138,14 +138,12 @@ class DataStorage():
         # If the key exists in the array, delete the data
         if key in self.running_data:
             del self.running_data[key]
-            print("KEY " + key + " deleted")
 
         # If file exists in filesystem, delete it
         file_to_remove = self.config['running_data_dir'] + os.sep + key + ".json"
 
         if os.path.isfile(file_to_remove):
             os.remove(file_to_remove)
-            print("file deleted: " + file_to_remove)
 
         # Data has been removed from memory and filesystem
         return

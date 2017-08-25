@@ -101,7 +101,7 @@ sync_hierarchy_rules = [
         # You can also use offset to start the count down the list. For
         # example,this search would capture directores 4-6 in the search,
         # because after implementing the offset of 3, they are the next 3
-        "sort_count": 2,
+        "sort_count": 1,
     },
 
 
@@ -151,10 +151,7 @@ sync_hierarchy_rules = [
 # These options are passed through to unison on every run
 global_unison_config_options = [
     # Test for space handling
-    # "-copyquoterem",
-
-    # Propagate file modification times
-    "-times",
+    "-copyquoterem=true",
 
     # Speeds up comparison
     "-fastcheck",
@@ -167,10 +164,17 @@ global_unison_config_options = [
     "-copyonconflict",
     "-prefer=newer",
 
+    # Don't bother with permissions
+    "-perms=0",
+    "-dontchmod=true",
+
     # Retry params
     "-retry=10",
-    "-perms=0",
     "-repeat=5",
+
+    # Enable native unison logging to a file
+    "-log=true",
+    "-logfile=/tmp/biglog",
 
     # Not entirely sure what these do, so....
     # "-maxerrors=20",
@@ -184,6 +188,16 @@ global_unison_config_options = [
     # Ignore lockfiles, since we'll be managing the processes ourselves
     "-ignorelocks",
     "-ignorearchives",
+
+    # Propagate file modification times
+    "-times=true",
+
+    # A few testing examples
+    "-watch=false",
+    # "-terse=true",
+    "-servercmd=/usr/bin/unison",
+
+    # consider -sortbysize to make more efficent with large changesets
 
     # TODO: Copy in entries from "ignores-to-add-back-later" before deployment
 

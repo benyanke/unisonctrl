@@ -38,6 +38,9 @@ class UnisonHandler():
     # Enables extra output
     DEBUG = True
 
+    # Enables extra output
+    INFO = True
+
     # self.config['unisonctrl_log_dir'] + os.sep + "unisonctrl.log"
     # self.config['unisonctrl_log_dir'] + os.sep + "unisonctrl.error"
 
@@ -76,6 +79,9 @@ class UnisonHandler():
 
         if(self.DEBUG):
             print("Constructor complete")
+
+        if(self.INFO):
+            print("\nStarting UnisonCTRL")
 
         self.cleanup_dead_processes()
 
@@ -298,17 +304,17 @@ class UnisonHandler():
 
         if requested_instance is None:
             # No instance data found, must start new one
-            if(self.DEBUG):
-                print("No instance data found for " + instance_name + ", must start new one")
+            if(self.DEBUG or self.INFO):
+                print("Sync instance '" + instance_name + "' not found, must start new one")
         elif requested_instance['config_hash'] == config_hash:
             # Existing instance data found, still uses same config - no restart
             if(self.DEBUG):
-                print("Instance data found for " + instance_name + " - still using same config, no need to restart")
+                print("Sync instance '" + instance_name + "' found: - still using same config, no need to restart")
             return
         else:
             # Existing instance data found, but uses different config, so restarting
-            if(self.DEBUG):
-                print("Instance data found for " + instance_name + " - using different config, killing and restarting")
+            if(self.DEBUG or self.INFO):
+                print("Sync instance '" + instance_name + "' - using different config, killing and restarting")
 
             self.kill_sync_instance_by_pid(requested_instance['pid'])
             self.data_storage.remove_data(requested_instance['syncname'])
@@ -348,7 +354,9 @@ class UnisonHandler():
             ""
         )
 
-        print(remote_path_connection_string)
+        # todo: add '-label' here
+
+        # print(remote_path_connection_string)
 
         # Check if SSH config key is specified
         if self.config['unison_remote_ssh_keyfile'] == "":
@@ -368,37 +376,147 @@ class UnisonHandler():
                 "'"
             )
 
-        print(remote_path_connection_string)
+        # print(remote_path_connection_string)
 
-        # Start unison
-        cmd = (
-            [self.config['unison_path']] +
-            ["" + str(self.config['unison_local_root']) + ""] +
-            [remote_path_connection_string] +
-            dirs_for_unison + self.config['global_unison_config_options']
-        )
+        """
+        Three operation methods for starting Unison:
 
-        print(cmd)
+        * default - passes a list of arguments, seperated out into elements, to
+                    popen
 
-        print(" ".join(cmd))
+        * default-shell - default, but with shell=true.
+        * concat - Passes the arguments as a single list (except for the 'unison'
+                    command itself)
 
-        print(self.config['unison_home_dir'])
+        * concat-shell - concat, but with shell=true. Not sure how to handle PID
+                         here yet.
+        """
 
-        mainlog = self.config['unison_log_dir'] + os.sep + instance_name + ".log"
-        errorlog = self.config['unison_log_dir'] + os.sep + instance_name + ".error"
+        popen_mode = "default"
 
-        with open(mainlog, "wb") as out, open(errorlog, "wb") as err:
-            running_instance_pid = subprocess.Popen(
-                cmd,
-                stdin=subprocess.DEVNULL, stdout=out, stderr=err,  # close_fds=True,
-                env={
-                    'UNISONLOCALHOSTNAME': self.config['unison_local_hostname'],
-                    'HOME': self.config['unison_home_dir'],
-                }
-            ).pid
+        if popen_mode == "default":
+            # Start unison
+            cmd = (
+                [self.config['unison_path']] +
+                ["" + str(self.config['unison_local_root']) + ""] +
+                [remote_path_connection_string] +
+                dirs_for_unison + self.config['global_unison_config_options']
+            )
 
-        print("PID: " + str(running_instance_pid) + " now running")
-        # exit()
+            # print(cmd)
+
+            print(" ".join(cmd))
+
+            # print(self.config['unison_home_dir'])
+
+            mainlog = self.config['unison_log_dir'] + os.sep + instance_name + ".log"
+            errorlog = self.config['unison_log_dir'] + os.sep + instance_name + ".error"
+
+            with open(mainlog, "wb") as out, open(errorlog, "wb") as err:
+                running_instance_pid = subprocess.Popen(
+                    cmd,
+                    stdin=subprocess.DEVNULL, stdout=out, stderr=err,  # close_fds=True,
+                    env={
+                        'UNISONLOCALHOSTNAME': self.config['unison_local_hostname'],
+                        'HOME': self.config['unison_home_dir'],
+                    }
+                ).pid
+
+        elif popen_mode == "default-shell":
+            # Start unison
+            cmd = (
+                [self.config['unison_path']] +
+                ["" + str(self.config['unison_local_root']) + ""] +
+                [remote_path_connection_string] +
+                dirs_for_unison + self.config['global_unison_config_options']
+            )
+
+            # print(cmd)
+
+            print(" ".join(cmd))
+
+            # print(self.config['unison_home_dir'])
+
+            mainlog = self.config['unison_log_dir'] + os.sep + instance_name + ".log"
+            errorlog = self.config['unison_log_dir'] + os.sep + instance_name + ".error"
+
+            with open(mainlog, "wb") as out, open(errorlog, "wb") as err:
+                running_instance_pid = subprocess.Popen(
+                    cmd,
+                    stdin=subprocess.DEVNULL, stdout=out, stderr=err,  # close_fds=True,
+                    env={
+                        'UNISONLOCALHOSTNAME': self.config['unison_local_hostname'],
+                        'HOME': self.config['unison_home_dir'],
+                    }, shell=True
+                ).pid
+
+        elif popen_mode == "concat":
+            # Start unison
+            cmd = (
+                [self.config['unison_path']] +
+                ["" + str(self.config['unison_local_root']) + ""] +
+                [remote_path_connection_string] +
+                dirs_for_unison + self.config['global_unison_config_options']
+            )
+
+            # print(cmd)
+
+            # convert command to single string, after popping unison
+            unison = cmd[0]
+            del cmd[0]
+            cmd = " ".join(cmd)
+
+            # Convert back to a two element string
+            cmd = [unison, cmd]
+
+            # print(self.config['unison_home_dir'])
+
+            mainlog = self.config['unison_log_dir'] + os.sep + instance_name + ".log"
+            errorlog = self.config['unison_log_dir'] + os.sep + instance_name + ".error"
+
+            with open(mainlog, "wb") as out, open(errorlog, "wb") as err:
+                running_instance_pid = subprocess.Popen(
+                    cmd,
+                    stdin=subprocess.DEVNULL, stdout=out, stderr=err,  # close_fds=True,
+                    env={
+                        'UNISONLOCALHOSTNAME': self.config['unison_local_hostname'],
+                        'HOME': self.config['unison_home_dir'],
+                    }
+                ).pid
+
+        elif popen_mode == "concat-shell":
+            # Start unison
+            cmd = (
+                [self.config['unison_path']] +
+                ["" + str(self.config['unison_local_root']) + ""] +
+                [remote_path_connection_string] +
+                dirs_for_unison + self.config['global_unison_config_options']
+            )
+
+            # print(cmd)
+
+            print(" ".join(cmd))
+
+            # convert command to single string, after popping unison
+            unison = cmd[0]
+            del cmd[0]
+            cmd = " ".join(cmd)
+
+            # Convert back to a two element string
+            cmd = [unison, cmd]
+
+            mainlog = self.config['unison_log_dir'] + os.sep + instance_name + ".log"
+            errorlog = self.config['unison_log_dir'] + os.sep + instance_name + ".error"
+
+            with open(mainlog, "wb") as out, open(errorlog, "wb") as err:
+                running_instance_pid = subprocess.Popen(
+                    cmd,
+                    stdin=subprocess.DEVNULL, stdout=out, stderr=err,  # close_fds=True,
+                    env={
+                        'UNISONLOCALHOSTNAME': self.config['unison_local_hostname'],
+                        'HOME': self.config['unison_home_dir'],
+                    }, shell=True
+                ).pid
 
         instance_info = {
             "pid": running_instance_pid,
@@ -407,12 +525,14 @@ class UnisonHandler():
             "dirs_to_sync": trimmed_dirs
         }
 
-        print(self.data_storage.running_data)
+        # print(instance_info)
+
+        # print(self.data_storage.running_data)
 
         # Store instance info
         self.data_storage.set_data(instance_name, instance_info)
 
-        print(self.data_storage.running_data)
+        # print(self.data_storage.running_data)
 
     def kill_sync_instance_by_pid(self, pid):
         """Kill unison instance by it's PID.
@@ -805,10 +925,13 @@ class UnisonHandler():
                 self.__class__.__name__
             )
 
+        if(self.INFO):
+            print("Run complete\n")
+
 
 # tmp : make this more robust
-US = UnisonHandler(True)
-# US = UnisonHandler(False)
+# US = UnisonHandler(True)
+US = UnisonHandler(False)
 
 # US.kill_sync_instance_by_pid(11701)
 
