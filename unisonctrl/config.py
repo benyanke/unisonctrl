@@ -198,7 +198,7 @@ global_unison_config_options = [
     # A few testing examples
     "-watch=false",
     "-servercmd=/usr/bin/unison",
-    # "-terse=true",
+    "-terse=true",
 
     # Enable unison debugging if needed
     # "-debug=all",
@@ -209,66 +209,67 @@ global_unison_config_options = [
 
 
     # Other unsyncable extensions
-    "-ignore= Name {*.tmp}",
-    "-ignore= Name {cifs*}",
+    "-ignore=Name {*.tmp}",
+    "-ignore=Name {cifs*}",
 
     # Linux extensions
-    "-ignore= Name {*~}",
-    "-ignore= Name {.fuse_hidden*}",
-    "-ignore= Name {.directory}",
-    "-ignore= Name {.Trash-*}",
-    "-ignore= Name {.nfs*}",
+    "-ignore=Name {*~}",
+    "-ignore=Name {.fuse_hidden*}",
+    "-ignore=Name {.directory}",
+    "-ignore=Name {.Trash-*}",
+    "-ignore=Name {.nfs*}",
+    "-ignore=Name {.*.swp}",
 
     # Mac extensions
-    "-ignore= Name {*.DS_Store}",
-    "-ignore= Name {.AppleDouble}",
-    "-ignore= Name {.LSOverride}",
-    "-ignore= Name {._*}",
-    "-ignore= Name {.DocumentRevisions-V100}",
-    "-ignore= Name {.fseventsd}",
-    "-ignore= Name {.Spotlight-V100}",
-    "-ignore= Name {.TemporaryItems}",
-    "-ignore= Name {.Trashes}",
-    "-ignore= Name {.VolumeIcon.icns}",
-    "-ignore= Name {.com.apple.timemachine.donotpresent}",
-    "-ignore= Name {.AppleDesktop}",
-    "-ignore= Name {.AppleDB}",
-    "-ignore= Name {Network Trash Folder}",
-    "-ignore= Name {Temporary Items}",
-    "-ignore= Name {.apdisk}",
-    "-ignore= Name {*.DS_Store}",
-    "-ignore= Name {*.DS_Store}",
-    "-ignore= Name {*.DS_Store}",
+    "-ignore=Name {*.DS_Store}",
+    "-ignore=Name {.AppleDouble}",
+    "-ignore=Name {.LSOverride}",
+    "-ignore=Name {._*}",
+    "-ignore=Name {.DocumentRevisions-V100}",
+    "-ignore=Name {.fseventsd}",
+    "-ignore=Name {.Spotlight-V100}",
+    "-ignore=Name {.TemporaryItems}",
+    "-ignore=Name {.Trashes}",
+    "-ignore=Name {.VolumeIcon.icns}",
+    "-ignore=Name {.com.apple.timemachine.donotpresent}",
+    "-ignore=Name {.AppleDesktop}",
+    "-ignore=Name {.AppleDB}",
+    "-ignore=Name {Network Trash Folder}",
+    "-ignore=Name {Temporary Items}",
+    "-ignore=Name {.apdisk}",
+    "-ignore=Name {*.DS_Store}",
+    "-ignore=Name {*.DS_Store}",
+    "-ignore=Name {*.DS_Store}",
 
     # Windows extensions
-    "-ignore= Name {Thumbs.db}",
-    "-ignore= Name {ehthumbs.db}",
-    "-ignore= Name {ehthumbs_vista.db}",
-    "-ignore= Name {*.stackdump}",
-    "-ignore= Name {Desktop.ini}",
-    "-ignore= Name {$RECYCLE.BIN/}",
-    "-ignore= Name {*.cab}",
-    "-ignore= Name {*.msi}",
-    "-ignore= Name {*.msm}",
-    "-ignore= Name {*.msp}",
-    "-ignore= Name {*.lnk}",
+    "-ignore=Name {Thumbs.db}",
+    "-ignore=Name {ehthumbs.db}",
+    "-ignore=Name {ehthumbs_vista.db}",
+    "-ignore=Name {*.stackdump}",
+    "-ignore=Name {Desktop.ini}",
+    "-ignore=Name {$RECYCLE.BIN/}",
+    "-ignore=Name {*.cab}",
+    "-ignore=Name {*.msi}",
+    "-ignore=Name {*.msm}",
+    "-ignore=Name {*.msp}",
+    "-ignore=Name {*.lnk}",
 
     # Software specific lock files
     # Adobe InDesign
-    "-ignore= Name {*.idlk}",
+    "-ignore=Name {*.idlk}",
     # Adobe FrameMaker
-    "-ignore= Name {*.lck}",
+    "-ignore=Name {*.lck}",
     # Microsoft Word
-    "-ignore= Name {~.doc*}",
+    "-ignore=Name {~.doc*}",
     # Microsoft Excel
-    "-ignore= Name {~$*.xls}",
-    "-ignore= Name {*.xlk}",
+    "-ignore=Name {~$*.xls}",
+    "-ignore=Name {*.xlk}",
     # Microsoft PowerPoint
-    "-ignore= Name {~$*.ppt}",
+    "-ignore=Name {~$*.ppt}",
     # Visio autosave temporary files
-    "-ignore= Name {*.~vsd*}",
+    "-ignore=Name {*.~vsd*}",
     # LibreOffice Lockfiles
-    "-ignore= Name {.~lock.*#}",
+    "-ignore=Name {.~lock.*#}",
 
 ]
 

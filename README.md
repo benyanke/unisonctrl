@@ -10,5 +10,8 @@ UnisonCTRL makes it easier to sync large mostly-read-only datasets with unison b
 * Get webhooks working for reporting and monitoring
   * Number of new/existing instances
   * Instance information
-  * Report on unexpected dead instances - this is important
-* Log rotation/disabling for unison logs
+  * Report on unknown dead instances - this is important
+* Automatic restart of instances when global config changes
+  * Currently it only does this when individual instance config changes
+* Turn into a proper terminal tool with options, like force restart all,
+  and get stats
