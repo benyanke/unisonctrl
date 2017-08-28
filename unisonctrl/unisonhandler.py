@@ -75,10 +75,12 @@ class UnisonHandler():
         atexit.register(self.exit_handler)
 
         # Set up logging
-        # logging.getLogger(__name__)
+        logging.getLogger(__name__)
 
         print("FAKELOG: setting log level and config")
+        logging.basicConfig(filename="sample.log", level=logging.DEBUG)
 
+        """
         logging.basicConfig(
             # filename=self.config['unisonctrl_log_dir'] + "unisonctrl.log",
             filename="/tmp/unisonctrl.log",
@@ -87,7 +89,6 @@ class UnisonHandler():
             # datefmt='%m/%d/%Y %I:%M:%S %p'
         )
 
-        """
         logging.basicConfig(
             filename='/tmp/UNISONCTRL.log',
             level=logging.INFO,
@@ -221,7 +222,7 @@ class UnisonHandler():
         none
 
         """
-        # contains the list of directories which have been handled by the loop
+        # Contains the list of directories which have been handled by the loop
         # so future iterations don't duplicate work
         handled_dirs = []
 
@@ -970,33 +971,33 @@ class UnisonHandler():
         -------
 
         """
-        """
         logging.debug(
             "Starting script shutdown in the class " +
             self.__class__.__name__
         )
-        """
+
         # Clean up dead processes before exiting
         self.cleanup_dead_processes()
 
         print("FAKELOG: [" + time.strftime("%c") + "] [UnisonCTRL] Exiting\n")
 
-        """
         logging.debug(
             "Script shutdown complete in class " +
             self.__class__.__name__
         )
 
         logging.info("Exiting UnisonCTRL")
-        """
 
 
 print("FAKELOG: STARTING")
 # tmp : make this more robust
-# US = UnisonHandler(True)
-US = UnisonHandler(False)
-
-# US.kill_sync_instance_by_pid(11701)
-# US.kill_sync_instance_by_pid(700000)
-
+US = UnisonHandler(True)
+# US = UnisonHandler(False)
 US.create_all_sync_instances()
+
+# add filemode="w" to overwrite
+logging.basicConfig(filename="sample.log", level=logging.debug)
+
+logging.debug("This is a debug message")
+logging.info("Informational message")
+logging.error("Bottomline an error has happened!")
