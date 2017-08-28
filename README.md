@@ -10,4 +10,5 @@ UnisonCTRL makes it easier to sync large mostly-read-only datasets with unison b
 * Get webhooks working for reporting and monitoring
   * Number of new/existing instances
   * Instance information
-  * Report on unknown dead instances - this is important
+  * Report on unexpected dead instances - this is important
+* Log rotation/disabling for unison logs
