@@ -86,10 +86,30 @@ sync_hierarchy_rules = [
         "sort_count": 3,
     },
 
-    # Sync the 3 highest-counted folders starting with "11" in their
+    # Sync the next 3 highest-counted folders starting with "11" in their
     # own unison instance
     {
         "syncname": "recent-phone-orders-batch-2",
+        "dir_selector": "Art Department/11*",
+        "sort_method": "name_highfirst",
+
+        "sort_count": 3,
+    },
+
+    # Sync the next 4 highest-counted folders starting with "11" in their
+    # own unison instance
+    {
+        "syncname": "recent-phone-orders-batch-3",
+        "dir_selector": "Art Department/11*",
+        "sort_method": "name_highfirst",
+
+        "sort_count": 4,
+    },
+
+    # Sync the next 8 highest-counted folders starting with "11" in their
+    # own unison instance
+    {
+        "syncname": "recent-phone-orders-batch-4",
         "dir_selector": "Art Department/11*",
         "sort_method": "name_highfirst",
 
@@ -109,10 +129,37 @@ sync_hierarchy_rules = [
         "sort_count": 3,
     },
 
-    # Sync the next 6 highest-counted folders starting with "M" in their
+    # Sync the next 3 highest-counted folders starting with "M" in their
     # own unison instance
     {
         "syncname": "recent-magento-orders-batch-2",
+        "dir_selector": "Art Department/M0*",
+        "sort_method": "name_highfirst",
+
+        # You can also use offset to start the count down the list. For
+        # example,this search would capture directores 4-6 in the search,
+        # because after implementing the offset of 3, they are the next 3
+        "sort_count": 3,
+    },
+
+    # Sync the next 6 highest-counted folders starting with "M" in their
+    # own unison instance
+    {
+        "syncname": "recent-magento-orders-batch-3",
+        "dir_selector": "Art Department/M0*",
+        "sort_method": "name_highfirst",
+
+        # You can also use offset to start the count down the list. For
+        # example,this search would capture directores 4-6 in the search,
+        # because after implementing the offset of 3, they are the next 3
+        "sort_count": 4,
+    },
+
+
+    # Sync the next 6 highest-counted folders starting with "M" in their
+    # own unison instance
+    {
+        "syncname": "recent-magento-orders-batch-4",
         "dir_selector": "Art Department/M0*",
         "sort_method": "name_highfirst",
 
@@ -131,10 +178,29 @@ sync_hierarchy_rules = [
         "sort_count": 3,
     },
 
+
     # Sync the next 3 highest-counted folders starting with 'O' in their
     # own unison instance
     {
         "syncname": "recent-web-orders-batch-2",
+        "dir_selector": "Art Department/O*",
+        "sort_method": "name_highfirst",
+        "sort_count": 3,
+    },
+
+    # Sync the next 6 highest-counted folders starting with 'O' in their
+    # own unison instance
+    {
+        "syncname": "recent-web-orders-batch-3",
+        "dir_selector": "Art Department/O*",
+        "sort_method": "name_highfirst",
+        "sort_count": 4,
+    },
+
+    # Sync the next 6 highest-counted folders starting with 'O' in their
+    # own unison instance
+    {
+        "syncname": "recent-web-orders-batch-4",
         "dir_selector": "Art Department/O*",
         "sort_method": "name_highfirst",
         "sort_count": 6,
