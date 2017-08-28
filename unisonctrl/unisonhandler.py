@@ -330,8 +330,6 @@ class UnisonHandler():
             dir_trimmed = dir[amount_to_clip:]
 
             # Format for unison command line args
-            # pathstr = "-path=\"" + dir_trimmed + "\""
-            # Test: removing quotes
             pathstr = "-path=" + dir_trimmed + ""
 
             # Append to list for args
@@ -362,7 +360,7 @@ class UnisonHandler():
 
         # Check if SSH config key is specified
         if self.config['unison_remote_ssh_keyfile'] == "":
-            # Key is not specified, use it
+            # Key is not specified, don't use it
             if self.DEBUG:
                 print("Key not specified")
 
@@ -389,133 +387,27 @@ class UnisonHandler():
             'PWD': self.config['unison_home_dir'],
         }
 
-        """
-        Three operation methods for starting Unison:
+        # Start unison
+        cmd = (
+            [self.config['unison_path']] +
+            ["" + str(self.config['unison_local_root']) + ""] +
+            [remote_path_connection_string] +
+            ["-label=unisonctrl-" + instance_name] +
+            dirs_for_unison +
+            self.config['global_unison_config_options']
+        )
+        # print(cmd)
+        # print(" ".join(cmd))
+        # print(self.config['unison_home_dir'])
 
-        * default - passes a list of arguments, seperated out into elements, to
-                    popen
-
-        * default-shell - default, but with shell=true.
-        * concat - Passes the arguments as a single list (except for the 'unison'
-                    command itself)
-
-        * concat-shell - concat, but with shell=true. Not sure how to handle PID
-                         here yet.
-        """
-
-        popen_mode = "default"
-
-        if popen_mode == "default":
-            # Start unison
-            cmd = (
-                [self.config['unison_path']] +
-                ["" + str(self.config['unison_local_root']) + ""] +
-                [remote_path_connection_string] +
-                dirs_for_unison + self.config['global_unison_config_options']
-            )
-
-            # print(cmd)
-
-            # print(" ".join(cmd))
-
-            # print(self.config['unison_home_dir'])
-
-            mainlog = self.config['unison_log_dir'] + os.sep + instance_name + ".log"
-            errorlog = self.config['unison_log_dir'] + os.sep + instance_name + ".error"
-
-            with open(mainlog, "wb") as out, open(errorlog, "wb") as err:
-                running_instance_pid = subprocess.Popen(
-                    cmd,
-                    stdin=subprocess.DEVNULL, stdout=out, stderr=err,  # close_fds=True,
-                    env=envvars
-                ).pid
-
-        elif popen_mode == "default-shell":
-            # Start unison
-            cmd = (
-                [self.config['unison_path']] +
-                ["" + str(self.config['unison_local_root']) + ""] +
-                [remote_path_connection_string] +
-                dirs_for_unison + self.config['global_unison_config_options']
-            )
-
-            # print(cmd)
-
-            print(" ".join(cmd))
-
-            # print(self.config['unison_home_dir'])
-
-            mainlog = self.config['unison_log_dir'] + os.sep + instance_name + ".log"
-            errorlog = self.config['unison_log_dir'] + os.sep + instance_name + ".error"
-
-            with open(mainlog, "wb") as out, open(errorlog, "wb") as err:
-                running_instance_pid = subprocess.Popen(
-                    cmd,
-                    stdin=subprocess.DEVNULL, stdout=out, stderr=err,  # close_fds=True,
-                    env=envvars, shell=True
-                ).pid
-
-        elif popen_mode == "concat":
-            # Start unison
-            cmd = (
-                [self.config['unison_path']] +
-                ["" + str(self.config['unison_local_root']) + ""] +
-                [remote_path_connection_string] +
-                dirs_for_unison + self.config['global_unison_config_options']
-            )
-
-            # print(cmd)
-
-            # convert command to single string, after popping unison
-            unison = cmd[0]
-            del cmd[0]
-            cmd = " ".join(cmd)
-
-            # Convert back to a two element string
-            cmd = [unison, cmd]
-
-            # print(self.config['unison_home_dir'])
-
-            mainlog = self.config['unison_log_dir'] + os.sep + instance_name + ".log"
-            errorlog = self.config['unison_log_dir'] + os.sep + instance_name + ".error"
-
-            with open(mainlog, "wb") as out, open(errorlog, "wb") as err:
-                running_instance_pid = subprocess.Popen(
-                    cmd,
-                    stdin=subprocess.DEVNULL, stdout=out, stderr=err,  # close_fds=True,
-                    env=envvars
-                ).pid
-
-        elif popen_mode == "concat-shell":
-            # Start unison
-            cmd = (
-                [self.config['unison_path']] +
-                ["" + str(self.config['unison_local_root']) + ""] +
-                [remote_path_connection_string] +
-                dirs_for_unison + self.config['global_unison_config_options']
-            )
-
-            # print(cmd)
-
-            print(" ".join(cmd))
-
-            # convert command to single string, after popping unison
-            unison = cmd[0]
-            del cmd[0]
-            cmd = " ".join(cmd)
-
-            # Convert back to a two element string
-            cmd = [unison, cmd]
-
-            mainlog = self.config['unison_log_dir'] + os.sep + instance_name + ".log"
-            errorlog = self.config['unison_log_dir'] + os.sep + instance_name + ".error"
-
-            with open(mainlog, "wb") as out, open(errorlog, "wb") as err:
-                running_instance_pid = subprocess.Popen(
-                    cmd,
-                    stdin=subprocess.DEVNULL, stdout=out, stderr=err,  # close_fds=True,
-                    env=envvars, shell=True
-                ).pid
+        mainlog = self.config['unison_log_dir'] + os.sep + instance_name + ".log"
+        errorlog = self.config['unison_log_dir'] + os.sep + instance_name + ".error"
+        with open(mainlog, "wb") as out, open(errorlog, "wb") as err:
+            running_instance_pid = subprocess.Popen(
+                cmd,
+                stdin=subprocess.DEVNULL, stdout=out, stderr=err,  # close_fds=True,
+                env=envvars
+            ).pid
 
         instance_info = {
             "pid": running_instance_pid,
