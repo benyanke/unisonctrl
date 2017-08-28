@@ -5,8 +5,7 @@ UnisonCTRL makes it easier to sync large mostly-read-only datasets with unison b
 ## TODO:
 * Implement better logging
 * Create documentation describing config
-* Clean up folder structure
-* Get ignores working
+* Clean up folder structures
 * Get webhooks working for reporting and monitoring
   * Number of new/existing instances
   * Instance information
