@@ -2,7 +2,11 @@
 
 # Path to store PID files
 
-# This does not need to persist between reboots, as it only contains
+# Logfile paths
+unisonctrl_log_dir = "/var/log/unisonctrl"
+unison_log_dir = "/var/log/unisonctrl/unison-instance-logs"
+
+# This does not need cto persist between reboots, as it only contains
 # information about running unison instances. Typically easiest to mount
 # somewhere in /var/run, or /tmp
 data_dir = "/tmp/unisonctrl"
@@ -81,9 +85,11 @@ sync_hierarchy_rules = [
         #   creation_date_highfirst
         #   creation_date_lowfirst
         "sort_method": "name_highfirst",
+
         # Select X from the top of the list you sorted above
         # "sort_count": 4,
-        "sort_count": 3,
+        # This is for debugging, to ensure each instance restarts every tim
+        "sort_count": 5,
     },
 
     # Sync the next 3 highest-counted folders starting with "11" in their
@@ -123,9 +129,6 @@ sync_hierarchy_rules = [
         "dir_selector": "Art Department/M0*",
         "sort_method": "name_highfirst",
 
-        # You can also use offset to start the count down the list. For
-        # example,this search would capture directores 4-6 in the search,
-        # because after implementing the offset of 3, they are the next 3
         "sort_count": 3,
     },
 
@@ -136,9 +139,6 @@ sync_hierarchy_rules = [
         "dir_selector": "Art Department/M0*",
         "sort_method": "name_highfirst",
 
-        # You can also use offset to start the count down the list. For
-        # example,this search would capture directores 4-6 in the search,
-        # because after implementing the offset of 3, they are the next 3
         "sort_count": 3,
     },
 
@@ -149,9 +149,6 @@ sync_hierarchy_rules = [
         "dir_selector": "Art Department/M0*",
         "sort_method": "name_highfirst",
 
-        # You can also use offset to start the count down the list. For
-        # example,this search would capture directores 4-6 in the search,
-        # because after implementing the offset of 3, they are the next 3
         "sort_count": 4,
     },
 
@@ -163,9 +160,6 @@ sync_hierarchy_rules = [
         "dir_selector": "Art Department/M0*",
         "sort_method": "name_highfirst",
 
-        # You can also use offset to start the count down the list. For
-        # example,this search would capture directores 4-6 in the search,
-        # because after implementing the offset of 3, they are the next 3
         "sort_count": 6,
     },
 
@@ -269,10 +263,8 @@ global_unison_config_options = [
     # Enable unison debugging if needed
     # "-debug=all",
 
-    # consider -sortbysize to make more efficent with large changesets
-
-    # TODO: Copy in entries from "ignores-to-add-back-later" before deployment
-
+    # consider using this to make more efficent with large changesets
+    "-sortbysize",
 
     # Other unsyncable extensions
     "-ignore=Name {*.tmp}",
