@@ -8,7 +8,6 @@
 # TODO: Replace DEBUG var with an actual logging framework, including log level
 # TODO: turn from hardcoded program into a command line utility
 
-import logging
 import subprocess
 import os
 import glob
@@ -20,7 +19,7 @@ import psutil
 import getpass
 import platform
 import copy
-
+import logging
 
 from datastorage import DataStorage
 
@@ -35,9 +34,6 @@ class UnisonHandler():
     config = {}
 
     # Enables extra output
-    DEBUG = True
-
-    # Enables extra output
     INFO = True
 
     # Logging Object
@@ -46,7 +42,7 @@ class UnisonHandler():
     # self.config['unisonctrl_log_dir'] + os.sep + "unisonctrl.log"
     # self.config['unisonctrl_log_dir'] + os.sep + "unisonctrl.error"
 
-    def __init__(self, debug=DEBUG):
+    def __init__(self):
         """Prepare UnisonHandler to manage unison instances.
 
         Parameters
@@ -65,9 +61,6 @@ class UnisonHandler():
         -------
 
         """
-        # Handle manual debug setting
-        self.DEBUG = debug
-
         # Set up configuration
         self.import_config()
 
@@ -75,83 +68,37 @@ class UnisonHandler():
         atexit.register(self.exit_handler)
 
         # Set up logging
+        logger = logging.getLogger('simple_example')
+        logger.setLevel(logging.DEBUG)
         # logging.getLogger(__name__)
 
-        print("FAKELOG: setting log level and config")
+        logging.error('This should go to both console and file')
 
         logging.basicConfig(
-            # filename=self.config['unisonctrl_log_dir'] + "unisonctrl.log",
-            filename="/tmp/unisonctrl.log",
-            level=logging.DEBUG
-            # format='[%(asctime)s] [UnisonCTRL] %(levelname)s: %(message)s',
-            # datefmt='%m/%d/%Y %I:%M:%S %p'
+            format='%(asctime)s %(message)s',
+            datefmt='%m/%d/%Y %I:%M:%S %p',
+            filename=self.config['unisonctrl_log_dir'] + os.sep + 'unisonctrl.log',
+            level=logging.INFO
         )
 
-        """
-        logging.basicConfig(
-            filename='/tmp/UNISONCTRL.log',
-            level=logging.INFO,
-            format='%(asctime)s %(levelname)s %(threadName)-10s %(message)s',
-        )
-
-
-        # Output info and higher to stdout
-        console = logging.StreamHandler()
-        console.setLevel(logging.INFO)
-        # set a format which is simpler for console use
-        formatter = logging.Formatter('%(levelname)-8s %(message)s')
-        # tell the handler to use this format
-        console.setFormatter(formatter)
-        # add the handler to the root logger
-        logging.getLogger('').addHandler(console)
-        """
-
-        # level=logging.INFO,
+        logging.critical("note: this is a critical error1")
 
         # Set up data storage backend
 
         # Disabling debugging on the storage layer, it's no longer needed
         self.data_storage = DataStorage(False, self.config)
-
+        logging.critical("note: this is a critical error2")
         logging.info("UnisonCTRL Starting")
 
         # Clean up dead processes to ensure data files are in an expected state
         self.cleanup_dead_processes()
+        logging.critical("note: this is a critical error3")
 
-    """
-
-    # Algo required
-
-    commands:
-
-    unisonctrl status-not sure, maybe combine with list
-
-    unisonctrl list-list currently running unison instances by reading pidfiles
-    and perhaps:
-        - confirming they're still running (pidcheck, simple)
-        - confirming they're not stuck (logs? pid communicaton?)
-        - when was last loop? (logs? wrapper script?)
-
-    unisonctrl update-check directory structure and make sure rules don't need
-    to be changed because of a change or
-
-    unisonctrl restart-stop + start
-
-    unisonctrl stop-stop all running unison instances, delete files in tmp dir
-
-    unisonctrl start-recalculate directory structure and regenerate config
-    files, restart unison instances
-
-
-    other features not sure where to put:/public/img should work, and is not
-    caught by .gitignore
-
-        # Get the
-     * check for unexpected dead processes and check logs
-     * parse logs and send stats to webhook
-     * calculate average sync latency
-
-    """
+        logger.debug('debug message')
+        logger.info('info message')
+        logger.warn('warn message')
+        logger.error('error message')
+        logger.critical('critical message')
 
     def create_all_sync_instances(self):
         """Create multiple sync instances from the config and filesystem info.
@@ -221,7 +168,7 @@ class UnisonHandler():
         none
 
         """
-        # contains the list of directories which have been handled by the loop
+        # Contains the list of directories which have been handled by the loop
         # so future iterations don't duplicate work
         handled_dirs = []
 
@@ -395,7 +342,6 @@ class UnisonHandler():
 
         """
         # TODO: check global config hash here too, not just instance-specific config
-
         logging.debug(
             "Processing instance '" + instance_name + "' , deciding whether" +
             "to kill or not"
@@ -490,13 +436,13 @@ class UnisonHandler():
         # Check if SSH config key is specified
         if self.config['unison_remote_ssh_keyfile'] == "":
             # Key is not specified, don't use it
-            if self.DEBUG:
-                print("Key not specified")
+            # TODO: reformat this entry
+            logging.debug("SSH key not specified")
 
         else:
             # Key is specified
-            if self.DEBUG:
-                print("Key specified: " + self.config['unison_remote_ssh_keyfile'])
+            # TODO: reformat this entry
+            logging.debug("Key specified: " + self.config['unison_remote_ssh_keyfile'])
 
             remote_path_connection_string = (
                 remote_path_connection_string +
@@ -970,33 +916,26 @@ class UnisonHandler():
         -------
 
         """
-        """
         logging.debug(
             "Starting script shutdown in the class " +
             self.__class__.__name__
         )
-        """
+
         # Clean up dead processes before exiting
         self.cleanup_dead_processes()
 
         print("FAKELOG: [" + time.strftime("%c") + "] [UnisonCTRL] Exiting\n")
 
-        """
         logging.debug(
             "Script shutdown complete in class " +
             self.__class__.__name__
         )
 
         logging.info("Exiting UnisonCTRL")
-        """
 
 
-print("FAKELOG: STARTING")
+# print("FAKELOG: STARTING before class even opens")
 # tmp : make this more robust
-# US = UnisonHandler(True)
-US = UnisonHandler(False)
-
-# US.kill_sync_instance_by_pid(11701)
-# US.kill_sync_instance_by_pid(700000)
-
+US = UnisonHandler()
+# US = UnisonHandler(False)
 US.create_all_sync_instances()
