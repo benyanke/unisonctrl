@@ -87,8 +87,6 @@ class UnisonHandler():
             # datefmt='%m/%d/%Y %I:%M:%S %p'
         )
 
-        logging.critical("Entry - this is CRITICAL yo")
-
         """
         logging.basicConfig(
             filename='/tmp/UNISONCTRL.log',
@@ -656,7 +654,6 @@ class UnisonHandler():
         none
 
         """
-
         # Ensure it still exists before continuing
         if not psutil.pid_exists(pid):
             return
