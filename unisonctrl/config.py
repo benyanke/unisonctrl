@@ -12,6 +12,11 @@ data_dir = "/tmp/unisonctrl"
 # or /var
 unison_home_dir = "/home/syncd"
 
+# This is the user you're running as. Needed for unison to run correctly
+# Often, python can detect this automatically, but if it can't, this
+# setting can override the auto-detected value
+# unison_user = "syncd"
+
 # Define unsion root directories
 # unison_local_root="/mnt/local/pcnart"
 unison_local_root = "/mnt/lan/pcnart"
@@ -101,9 +106,8 @@ sync_hierarchy_rules = [
         # You can also use offset to start the count down the list. For
         # example,this search would capture directores 4-6 in the search,
         # because after implementing the offset of 3, they are the next 3
-        "sort_count": 1,
+        "sort_count": 3,
     },
-
 
     # Sync the next 6 highest-counted folders starting with "M" in their
     # own unison instance
@@ -187,15 +191,17 @@ global_unison_config_options = [
 
     # Ignore lockfiles, since we'll be managing the processes ourselves
     "-ignorelocks",
-    "-ignorearchives",
 
     # Propagate file modification times
     "-times=true",
 
     # A few testing examples
     "-watch=false",
-    # "-terse=true",
     "-servercmd=/usr/bin/unison",
+    # "-terse=true",
+
+    # Enable unison debugging if needed
+    # "-debug=all",
 
     # consider -sortbysize to make more efficent with large changesets
 
@@ -203,9 +209,10 @@ global_unison_config_options = [
 
 ]
 
-# Log file
-# log_file="/opt/unison/config/templates"
-# log_file="/opt/unison/config/templates"
+# These options are passed through to unison on every run
+webhooks = [
+
+]
 
 # If set to true, directories will be made if the paths are not found
 # on the system

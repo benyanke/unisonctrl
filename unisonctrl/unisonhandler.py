@@ -14,9 +14,9 @@ import glob
 import atexit
 import itertools
 import hashlib
-# import time
+import time
 import psutil
-# import signal
+import getpass
 import platform
 import copy
 
@@ -81,7 +81,7 @@ class UnisonHandler():
             print("Constructor complete")
 
         if(self.INFO):
-            print("\nStarting UnisonCTRL")
+            print("[" + time.strftime("%c") + "] [UnisonCTRL] Starting")
 
         self.cleanup_dead_processes()
 
@@ -330,7 +330,9 @@ class UnisonHandler():
             dir_trimmed = dir[amount_to_clip:]
 
             # Format for unison command line args
-            pathstr = "-path=\"" + dir_trimmed + "\""
+            # pathstr = "-path=\"" + dir_trimmed + "\""
+            # Test: removing quotes
+            pathstr = "-path=" + dir_trimmed + ""
 
             # Append to list for args
             dirs_for_unison.append(pathstr)
@@ -378,6 +380,15 @@ class UnisonHandler():
 
         # print(remote_path_connection_string)
 
+        # Set env vars to pass to unison
+        envvars = {
+            'UNISONLOCALHOSTNAME': self.config['unison_local_hostname'],
+            'HOME': self.config['unison_home_dir'],
+            'USER': self.config['unison_user'],
+            'LOGNAME': self.config['unison_user'],
+            'PWD': self.config['unison_home_dir'],
+        }
+
         """
         Three operation methods for starting Unison:
 
@@ -405,7 +416,7 @@ class UnisonHandler():
 
             # print(cmd)
 
-            print(" ".join(cmd))
+            # print(" ".join(cmd))
 
             # print(self.config['unison_home_dir'])
 
@@ -416,10 +427,7 @@ class UnisonHandler():
                 running_instance_pid = subprocess.Popen(
                     cmd,
                     stdin=subprocess.DEVNULL, stdout=out, stderr=err,  # close_fds=True,
-                    env={
-                        'UNISONLOCALHOSTNAME': self.config['unison_local_hostname'],
-                        'HOME': self.config['unison_home_dir'],
-                    }
+                    env=envvars
                 ).pid
 
         elif popen_mode == "default-shell":
@@ -444,10 +452,7 @@ class UnisonHandler():
                 running_instance_pid = subprocess.Popen(
                     cmd,
                     stdin=subprocess.DEVNULL, stdout=out, stderr=err,  # close_fds=True,
-                    env={
-                        'UNISONLOCALHOSTNAME': self.config['unison_local_hostname'],
-                        'HOME': self.config['unison_home_dir'],
-                    }, shell=True
+                    env=envvars, shell=True
                 ).pid
 
         elif popen_mode == "concat":
@@ -478,10 +483,7 @@ class UnisonHandler():
                 running_instance_pid = subprocess.Popen(
                     cmd,
                     stdin=subprocess.DEVNULL, stdout=out, stderr=err,  # close_fds=True,
-                    env={
-                        'UNISONLOCALHOSTNAME': self.config['unison_local_hostname'],
-                        'HOME': self.config['unison_home_dir'],
-                    }
+                    env=envvars
                 ).pid
 
         elif popen_mode == "concat-shell":
@@ -512,10 +514,7 @@ class UnisonHandler():
                 running_instance_pid = subprocess.Popen(
                     cmd,
                     stdin=subprocess.DEVNULL, stdout=out, stderr=err,  # close_fds=True,
-                    env={
-                        'UNISONLOCALHOSTNAME': self.config['unison_local_hostname'],
-                        'HOME': self.config['unison_home_dir'],
-                    }, shell=True
+                    env=envvars, shell=True
                 ).pid
 
         instance_info = {
@@ -793,6 +792,8 @@ class UnisonHandler():
             'unison_remote_ssh_keyfile',
             'unison_local_hostname',
             'unison_home_dir',
+            'unison_user',
+            'webhooks',
         }
 
         # If a setting contains a directory path, add it's key here and it will
@@ -817,6 +818,7 @@ class UnisonHandler():
             'running_data_dir': self.config['data_dir'] + os.sep + "running-sync-instance-information",
             'unison_log_dir': self.config['data_dir'] + os.sep + "unison-logs",
             'unisonctrl_log_dir': self.config['data_dir'] + os.sep + "unisonctrl-logs",
+            'unison_user': getpass.getuser(),
 
         }
 
@@ -926,7 +928,7 @@ class UnisonHandler():
             )
 
         if(self.INFO):
-            print("Run complete\n")
+            print("[" + time.strftime("%c") + "] [UnisonCTRL] Exiting\n")
 
 
 # tmp : make this more robust
