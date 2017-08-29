@@ -212,6 +212,15 @@ sync_hierarchy_rules = [
     },
 ]
 
+# Log rotation
+# First option is "off", which logs to a single file and never rotates.
+# Second is "time", which rotates daily, keeping the past 14 days.
+# The third option is "size", which rotates once a file reaches 50 MB.
+#
+# "timed" is default if this config entry isn't found.
+#
+rotate_logs = "time"
+
 # These options are passed through to unison on every run
 global_unison_config_options = [
     # Test for space handling
@@ -236,10 +245,6 @@ global_unison_config_options = [
     "-retry=10",
     "-repeat=5",
 
-    # Enable native unison logging to a file
-    "-log=true",
-    "-logfile=/tmp/biglog",
-
     # Not entirely sure what these do, so....
     # "-maxerrors=20",
     # "-contactquietly",
@@ -255,10 +260,10 @@ global_unison_config_options = [
     # Propagate file modification times
     "-times=true",
 
-    # A few testing examples
+    # A misc settings
     "-watch=false",
     "-servercmd=/usr/bin/unison",
-    "-terse=true",
+    # "-terse=true",
 
     # Enable unison debugging if needed
     # "-debug=all",

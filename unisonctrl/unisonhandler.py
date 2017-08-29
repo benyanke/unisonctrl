@@ -19,7 +19,9 @@ import psutil
 import getpass
 import platform
 import copy
+
 import logging
+import logging.handlers
 
 from datastorage import DataStorage
 
@@ -68,46 +70,49 @@ class UnisonHandler():
         atexit.register(self.exit_handler)
 
         # Set up logging
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger = logging.getLogger('unisonctrl')
+        self.logger.setLevel(logging.INFO)
 
         # Set up main log file logging
-        logFileFormatter = logging.Formatter('[%(asctime)-22s] %(levelname)-9s : %(message)s')
-        logfileHandler = logging.FileHandler(self.config['unisonctrl_log_dir'] + os.sep + 'unisonctrl.log')
+        logFileFormatter = logging.Formatter(
+            fmt='[%(asctime)-s] %(levelname)-9s : %(message)s',
+            datefmt='%m/%d/%Y %I:%M:%S %p'
+        )
+
+        # Size based log rotation
+        if (self.config['rotate_logs'] == "size"):
+            logfileHandler = logging.handlers.RotatingFileHandler(
+                self.config['unisonctrl_log_dir'] + os.sep + 'unisonctrl.log',
+                # maxBytes=50000000,  # 50mb
+                maxBytes=5000,  # 50mb
+                backupCount=20
+            )
+
+        # Timed log rotation
+        elif (self.config['rotate_logs'] == "time"):
+            logfileHandler = logging.handlers.TimedRotatingFileHandler(
+                self.config['unisonctrl_log_dir'] + os.sep + 'unisonctrl.log',
+                when="midnight",
+                backupCount=14,  # Keep past 14 days
+            )
+
+        # No log rotation
+        elif (self.config['rotate_logs'] == "off"):
+            logfileHandler = logging.FileHandler()
+
+        else:
+            logfileHandler = logging.FileHandler()
+
         logfileHandler.setLevel(logging.DEBUG)
         logfileHandler.setFormatter(logFileFormatter)
         self.logger.addHandler(logfileHandler)
 
-        # Send some logs to console when running
-        consoleFormatter = logging.Formatter('%(levelname)s : %(message)s')
+        # Send logs to console when running
+        consoleFormatter = logging.Formatter('[%(asctime)-22s] %(levelname)s : %(message)s')
         consoleHandler = logging.StreamHandler()
         consoleHandler.setLevel(logging.INFO)
         consoleHandler.setFormatter(consoleFormatter)
         self.logger.addHandler(consoleHandler)
-
-        """
-        # Handle screen output logging
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.INFO)
-
-        screenFormatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        fh.setFormatter(formatter)
-        ch.setFormatter(formatter)
-        # add the handlers to the self.logger
-        self.logger.addHandler(fh)
-        self.logger.addHandler(ch)
-        """
-
-        logging.basicConfig(
-            filename="/home/syncd/test.log",
-            level=logging.INFO,
-            format='[%(asctime)-22s] %(levelname)-9s : %(message)s',
-            datefmt='%m/%d/%Y %I:%M:%S %p',
-        )
-
-        # level=logging.INFO,
-
-        # Set up data storage backend
 
         # Disabling debugging on the storage layer, it's no longer needed
         self.data_storage = DataStorage(False, self.config)
@@ -116,6 +121,25 @@ class UnisonHandler():
 
         # Clean up dead processes to ensure data files are in an expected state
         self.cleanup_dead_processes()
+
+    def run(self):
+        """General wrapper to ensure running instances are up to date.
+
+        Parameters
+        ----------
+        none
+
+        Returns
+        -------
+        list
+            PIDs of dead unison instances which we thought were running.
+
+        Throws
+        -------
+        none
+
+        """
+        self.create_all_sync_instances()
 
     def create_all_sync_instances(self):
         """Create multiple sync instances from the config and filesystem info.
@@ -141,27 +165,23 @@ class UnisonHandler():
         # unhandled_sync_instances = copy.deepcopy(dirs_to_sync_by_sync_instance)
         unhandled_sync_instances = copy.deepcopy(self.data_storage.running_data)
 
-        # print("######## To maybe kill: ")
-        # print(unhandled_sync_instances)
-
         # Loop through each entry in the dict and create a sync instance for it
         for instance_name, dirs_to_sync in dirs_to_sync_by_sync_instance.items():
 
             # Mark this instance as handled so it's not killed later
             unhandled_sync_instances.pop(instance_name, None)
 
-            # print("######## Not neededing to kill:")
-            # print(instance_name)
-
             # Make new sync instance
             self.create_sync_instance(instance_name, dirs_to_sync)
 
-        # print("######## To kill: ")
-        # print(unhandled_sync_instances)
-
         # Kill any instances in unhandled_sync_instances, because they are
         # no longer required needed
+
         for inst_to_kill in unhandled_sync_instances:
+            self.logger.debug(
+                "Cleaning up instance '" + inst_to_kill + "'" +
+                " which is no longer needed."
+            )
             self.kill_sync_instance_by_pid(self.data_storage.running_data[inst_to_kill]['pid'])
 
     def get_dirs_to_sync(self, sync_hierarchy_rules):
@@ -479,6 +499,9 @@ class UnisonHandler():
             'PWD': self.config['unison_home_dir'],
         }
 
+        logfile = self.config['unison_log_dir'] + os.sep + instance_name + ".log"
+        self.touch(logfile)
+
         # Start unison
         cmd = (
             [self.config['unison_path']] +
@@ -486,17 +509,23 @@ class UnisonHandler():
             [remote_path_connection_string] +
             ["-label=unisonctrl-" + instance_name] +
             dirs_for_unison +
-            self.config['global_unison_config_options']
+            self.config['global_unison_config_options'] +
+            ["-log=true"] +
+            [
+                "-logfile=" +
+                logfile
+            ]
         )
 
-        mainlog = self.config['unison_log_dir'] + os.sep + instance_name + ".log"
-        errorlog = self.config['unison_log_dir'] + os.sep + instance_name + ".error"
-        with open(mainlog, "wb") as out, open(errorlog, "wb") as err:
-            running_instance_pid = subprocess.Popen(
-                cmd,
-                stdin=subprocess.DEVNULL, stdout=out, stderr=err,  # close_fds=True,
-                env=envvars
-            ).pid
+        # self.logger.info(" ".join(cmd))
+
+        running_instance_pid = subprocess.Popen(
+            cmd,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,  # close_fds=True,
+            env=envvars
+        ).pid
 
         instance_info = {
             "pid": running_instance_pid,
@@ -507,7 +536,7 @@ class UnisonHandler():
 
         self.logger.info(
             "New instance '" + instance_name + "' " +
-            "Started new instance (PID " + str(instance_info['pid']) + ")."
+            " (PID " + str(instance_info['pid']) + ")."
         )
 
         # Store instance info
@@ -515,6 +544,39 @@ class UnisonHandler():
 
         # New instance was created, return true
         return True
+
+    def touch(self, fname, mode=0o644, dir_fd=None, **kwargs):
+        """Python equuivilent for unix "touch".
+
+        Paramaters
+        -------
+        str
+            filename to touch
+
+        Throws
+        -------
+        none
+
+        Returns
+        -------
+        none
+
+        Throws
+        -------
+        none
+
+        Doctests
+        -------
+
+        """
+        flags = os.O_CREAT | os.O_APPEND
+        with os.fdopen(os.open(fname, flags=flags, mode=mode, dir_fd=dir_fd)) as f:
+            os.utime(
+                f.fileno() if os.utime in os.supports_fd else fname,
+                dir_fd=None if os.supports_fd else dir_fd, **kwargs
+            )
+            with open(fname, 'a'):
+                os.utime(fname, None)
 
     def kill_sync_instance_by_pid(self, pid):
         """Kill unison instance by it's PID.
@@ -815,6 +877,7 @@ class UnisonHandler():
             'unison_home_dir',
             'unison_user',
             'webhooks',
+            'rotate_logs',
         }
 
         # If a setting contains a directory path, add it's key here and it will
@@ -840,12 +903,16 @@ class UnisonHandler():
             'unison_log_dir': self.config['data_dir'] + os.sep + "unison-logs",
             'unisonctrl_log_dir': self.config['data_dir'] + os.sep + "unisonctrl-logs",
             'unison_user': getpass.getuser(),
+            'rotate_logs': "time",
         }
+
+        # TODO: Implement allowedSettings, which force settings to be
+        # in a given list of options
 
         # Apply default settings to fill gaps between explicitly set ones
         for key in defaultSettings:
             if (key not in self.config):
-                self.config[key] = defaultSettings[key].strip()
+                self.config[key] = defaultSettings[key]
 
         # Ensure all required keys are specified
         for key in validSettings:
@@ -949,11 +1016,3 @@ class UnisonHandler():
         )
 
         self.logger.info("Exiting UnisonCTRL")
-
-
-# print("FAKELOG: STARTING before class even opens")
-# tmp : make this more robust
-
-US = UnisonHandler()
-# US = UnisonHandler(False)
-US.create_all_sync_instances()
