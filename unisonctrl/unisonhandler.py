@@ -68,12 +68,12 @@ class UnisonHandler():
         atexit.register(self.exit_handler)
 
         # Set up logging
-        logger = logging.getLogger('simple_example')
-        logger.setLevel(logging.DEBUG)
-        # logging.getLogger(__name__)
+        logging.getLogger(__name__)
 
-        logging.error('This should go to both console and file')
+        print("FAKELOG: setting log level and config")
+        logging.basicConfig(filename="sample.log", level=logging.DEBUG)
 
+        """
         logging.basicConfig(
             format='%(asctime)s %(message)s',
             datefmt='%m/%d/%Y %I:%M:%S %p',
@@ -81,7 +81,25 @@ class UnisonHandler():
             level=logging.INFO
         )
 
-        logging.critical("note: this is a critical error1")
+        logging.basicConfig(
+            filename='/tmp/UNISONCTRL.log',
+            level=logging.INFO,
+            format='%(asctime)s %(levelname)s %(threadName)-10s %(message)s',
+        )
+
+
+        # Output info and higher to stdout
+        console = logging.StreamHandler()
+        console.setLevel(logging.INFO)
+        # set a format which is simpler for console use
+        formatter = logging.Formatter('%(levelname)-8s %(message)s')
+        # tell the handler to use this format
+        console.setFormatter(formatter)
+        # add the handler to the root logger
+        logging.getLogger('').addHandler(console)
+        """
+
+        # level=logging.INFO,
 
         # Set up data storage backend
 
@@ -94,11 +112,11 @@ class UnisonHandler():
         self.cleanup_dead_processes()
         logging.critical("note: this is a critical error3")
 
-        logger.debug('debug message')
-        logger.info('info message')
-        logger.warn('warn message')
-        logger.error('error message')
-        logger.critical('critical message')
+        logging.debug('debug message')
+        logging.info('info message')
+        logging.warn('warn message')
+        logging.error('error message')
+        logging.critical('critical message')
 
     def create_all_sync_instances(self):
         """Create multiple sync instances from the config and filesystem info.
@@ -936,6 +954,7 @@ class UnisonHandler():
 
 # print("FAKELOG: STARTING before class even opens")
 # tmp : make this more robust
+
 US = UnisonHandler()
 # US = UnisonHandler(False)
 US.create_all_sync_instances()
