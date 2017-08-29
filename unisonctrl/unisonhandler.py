@@ -14,7 +14,7 @@ import glob
 import atexit
 import itertools
 import hashlib
-import time
+# import time
 import psutil
 import getpass
 import platform
@@ -61,43 +61,49 @@ class UnisonHandler():
         -------
 
         """
-        # Set up configuration
         self.import_config()
+        # Set up configuration
 
         # Register exit handler
         atexit.register(self.exit_handler)
 
         # Set up logging
-        logging.getLogger(__name__)
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
 
-        print("FAKELOG: setting log level and config")
-        logging.basicConfig(filename="sample.log", level=logging.DEBUG)
+        # Set up main log file logging
+        logFileFormatter = logging.Formatter('[%(asctime)-22s] %(levelname)-9s : %(message)s')
+        logfileHandler = logging.FileHandler(self.config['unisonctrl_log_dir'] + os.sep + 'unisonctrl.log')
+        logfileHandler.setLevel(logging.DEBUG)
+        logfileHandler.setFormatter(logFileFormatter)
+        self.logger.addHandler(logfileHandler)
+
+        # Send some logs to console when running
+        consoleFormatter = logging.Formatter('%(levelname)s : %(message)s')
+        consoleHandler = logging.StreamHandler()
+        consoleHandler.setLevel(logging.INFO)
+        consoleHandler.setFormatter(consoleFormatter)
+        self.logger.addHandler(consoleHandler)
 
         """
-        logging.basicConfig(
-            format='%(asctime)s %(message)s',
-            datefmt='%m/%d/%Y %I:%M:%S %p',
-            filename=self.config['unisonctrl_log_dir'] + os.sep + 'unisonctrl.log',
-            level=logging.INFO
-        )
+        # Handle screen output logging
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+
+        screenFormatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        fh.setFormatter(formatter)
+        ch.setFormatter(formatter)
+        # add the handlers to the self.logger
+        self.logger.addHandler(fh)
+        self.logger.addHandler(ch)
+        """
 
         logging.basicConfig(
-            filename='/tmp/UNISONCTRL.log',
+            filename="/home/syncd/test.log",
             level=logging.INFO,
-            format='%(asctime)s %(levelname)s %(threadName)-10s %(message)s',
+            format='[%(asctime)-22s] %(levelname)-9s : %(message)s',
+            datefmt='%m/%d/%Y %I:%M:%S %p',
         )
-
-
-        # Output info and higher to stdout
-        console = logging.StreamHandler()
-        console.setLevel(logging.INFO)
-        # set a format which is simpler for console use
-        formatter = logging.Formatter('%(levelname)-8s %(message)s')
-        # tell the handler to use this format
-        console.setFormatter(formatter)
-        # add the handler to the root logger
-        logging.getLogger('').addHandler(console)
-        """
 
         # level=logging.INFO,
 
@@ -105,18 +111,11 @@ class UnisonHandler():
 
         # Disabling debugging on the storage layer, it's no longer needed
         self.data_storage = DataStorage(False, self.config)
-        logging.critical("note: this is a critical error2")
-        logging.info("UnisonCTRL Starting")
+
+        self.logger.info("UnisonCTRL Starting")
 
         # Clean up dead processes to ensure data files are in an expected state
         self.cleanup_dead_processes()
-        logging.critical("note: this is a critical error3")
-
-        logging.debug('debug message')
-        logging.info('info message')
-        logging.warn('warn message')
-        logging.error('error message')
-        logging.critical('critical message')
 
     def create_all_sync_instances(self):
         """Create multiple sync instances from the config and filesystem info.
@@ -194,14 +193,14 @@ class UnisonHandler():
         # end of the method
         all_dirs_to_sync = {}
 
-        logging.debug(
+        self.logger.debug(
             "Processing directories to sync. " +
             str(len(sync_hierarchy_rules)) + " rules to process."
         )
 
         for sync_instance in sync_hierarchy_rules:
 
-            logging.debug(
+            self.logger.debug(
                 "Instance '" + sync_instance['syncname'] + "' " +
                 "Parsing rules and directories."
             )
@@ -223,7 +222,7 @@ class UnisonHandler():
                 sync_instance['overlap'] is False
             ):
 
-                logging.debug(
+                self.logger.debug(
                     "Instance '" + sync_instance['syncname'] + "' " +
                     "Removing already handled directories."
                 )
@@ -235,7 +234,7 @@ class UnisonHandler():
                 # Log event if the duplication handler remove directories
                 # Added 'False and' to disable this section. TMI in the logs
                 if(before != after):
-                    logging.debug(
+                    self.logger.debug(
                         "Instance '" + sync_instance['syncname'] + "' " +
                         "Parse result: " + str(before) + " dirs down to " +
                         str(after) + " dirs by removing already handled dirs"
@@ -253,7 +252,7 @@ class UnisonHandler():
             # Add other sort implementations here later, if wanted
             else:
 
-                # Message for exception and logger
+                # Message for exception and self.logger
                 msg = (
                     "'" + sync_instance['sort_method'] + "'" +
                     " is not a valid sort method on sync instance " +
@@ -261,8 +260,8 @@ class UnisonHandler():
                     "Instance will not be created."
                 )
 
-                # Send message to logger
-                logging.warn(msg)
+                # Send message to self.logger
+                self.logger.warn(msg)
 
                 # Uncomment this to raise an exception instead of returning blank
                 # raise ValueError(msg)
@@ -275,7 +274,7 @@ class UnisonHandler():
 
                 if (not isinstance(sync_instance['sort_count'], int)):
                     # if not int, throw warning
-                    logging.warning(
+                    self.logger.warning(
                         "Instance '" + sync_instance['syncname'] + "' " +
                         "sort_count '" + str(sync_instance['sort_count']) + "'" +
                         " is not castable to int. Setting sort_count to a " +
@@ -287,7 +286,7 @@ class UnisonHandler():
 
                 else:
                     # If it's a valid int, use it
-                    logging.debug(
+                    self.logger.debug(
                         "Instance '" + sync_instance['syncname'] + "' " +
                         "sort_count set at " + str(sync_instance['sort_count']) + "."
                     )
@@ -310,7 +309,7 @@ class UnisonHandler():
             if len(dirs_to_sync) > 0:
                 all_dirs_to_sync[sync_instance['syncname']] = dirs_to_sync
 
-            logging.debug(
+            self.logger.debug(
                 "Instance '" + sync_instance['syncname'] + "' " +
                 "Syncing " + str(len(dirs_to_sync)) + " directories."
             )
@@ -325,7 +324,7 @@ class UnisonHandler():
                     dirstr + "\n\n"
                 )
 
-        logging.debug(
+        self.logger.debug(
             "Sync rule parsing complete. " +
             "Syncing " + str(len(handled_dirs)) + " explicit directories " +
             "in all instances combined"
@@ -360,7 +359,7 @@ class UnisonHandler():
 
         """
         # TODO: check global config hash here too, not just instance-specific config
-        logging.debug(
+        self.logger.debug(
             "Processing instance '" + instance_name + "' , deciding whether" +
             "to kill or not"
         )
@@ -389,21 +388,21 @@ class UnisonHandler():
         if requested_instance is None:
 
             # No instance data found, must start new one
-            logging.info(
+            self.logger.info(
                 "Instance '" + instance_name + "' " +
                 "No instance data found, starting new sync instance."
             )
 
         elif requested_instance['config_hash'] == config_hash:
             # Existing instance data found, still uses same config - no restart
-            logging.debug(
+            self.logger.debug(
                 "Instance '" + instance_name + "' " +
                 "Instance data found, config still unchanged."
             )
             return False
         else:
             # Existing instance data found, but uses different config, so restarting
-            logging.info(
+            self.logger.info(
                 "Instance '" + instance_name + "' " +
                 "Instance data found, but config or directories to sync have" +
                 " changed. Restarting instance."
@@ -455,12 +454,12 @@ class UnisonHandler():
         if self.config['unison_remote_ssh_keyfile'] == "":
             # Key is not specified, don't use it
             # TODO: reformat this entry
-            logging.debug("SSH key not specified")
+            self.logger.debug("SSH key not specified")
 
         else:
             # Key is specified
             # TODO: reformat this entry
-            logging.debug("Key specified: " + self.config['unison_remote_ssh_keyfile'])
+            self.logger.debug("Key specified: " + self.config['unison_remote_ssh_keyfile'])
 
             remote_path_connection_string = (
                 remote_path_connection_string +
@@ -506,7 +505,7 @@ class UnisonHandler():
             "dirs_to_sync": trimmed_dirs
         }
 
-        logging.info(
+        self.logger.info(
             "New instance '" + instance_name + "' " +
             "Started new instance (PID " + str(instance_info['pid']) + ")."
         )
@@ -547,7 +546,7 @@ class UnisonHandler():
         # Get the list of known pids to ensure we only kill one of those
         running_data = self.data_storage.running_data
 
-        logging.debug(
+        self.logger.debug(
             "Attempting to kill PID '" + str(pid) + "'"
         )
 
@@ -568,7 +567,7 @@ class UnisonHandler():
 
         # First make sure the process exists
         if not psutil.pid_exists(pid):
-            logging.info(
+            self.logger.info(
                 "PID " + str(pid) + " was not found. Perhaps already dead?"
             )
             return
@@ -589,7 +588,7 @@ class UnisonHandler():
                 "/*', and run UnisonCTRL again."
             )
 
-            logging.critical(longmsg)
+            self.logger.critical(longmsg)
 
             raise RuntimeError(shortmsg)
 
@@ -631,7 +630,7 @@ class UnisonHandler():
 
         # Ensure it still exists before continuing
         if not psutil.pid_exists(pid):
-            logging.debug(
+            self.logger.debug(
                 "PID " + str(pid) + " was killed with SIGTERM successfully."
             )
             return
@@ -640,7 +639,7 @@ class UnisonHandler():
         p.kill()  # SIGKILL
         psutil.wait_procs([p], timeout=3)
 
-        logging.info(
+        self.logger.info(
             "PID " + str(pid) + " could not be killed with SIGTERM, and " +
             "was killed with SIGKILL."
         )
@@ -682,12 +681,12 @@ class UnisonHandler():
 
         # Note: if nothing crashes, dead instances should never exist.
         if(len(dead_instances) > 0):
-            logging.warn(
+            self.logger.warn(
                 "Found " + str(len(dead_instances)) + " unexpected dead " +
                 "instances. Cleaning up data files now."
             )
         else:
-            logging.debug(
+            self.logger.debug(
                 "Found " + str(len(dead_instances)) + " unexpected dead " +
                 "instances to clean up."
             )
@@ -696,7 +695,7 @@ class UnisonHandler():
         for instance_id in dead_instances:
             process = self.get_process_info_by_pid(instance_id)
 
-            logging.debug(
+            self.logger.debug(
                 "Removing data on '" + str(process['syncname']) + "' " +
                 "because it is not running as expected."
             )
@@ -722,7 +721,7 @@ class UnisonHandler():
         none
 
         """
-        # TODO: discuss if logging needs to happen here? I think not? -BY
+        # TODO: discuss if self.logger needs to happen here? I think not? -BY
 
         for process in self.data_storage.running_data:
             if self.data_storage.running_data[process]['pid'] == pid:
@@ -759,7 +758,7 @@ class UnisonHandler():
             # If error caught here, no unison instances are found running
             pids = []
 
-        logging.debug(
+        self.logger.debug(
             "Found " + str(len(pids)) + " running instances on this system: PIDs " +
             ", ".join(pids)
         )
@@ -863,7 +862,7 @@ class UnisonHandler():
             self.config[key] = self.sanatize_path(self.config[key])
 
         # If you reach here, configuration was read and imported without error
-        logging.debug("Config successfully imported")
+
         return True
 
     def sanatize_path(self, path):
@@ -934,22 +933,22 @@ class UnisonHandler():
         -------
 
         """
-        logging.debug(
+        self.logger.debug(
             "Starting script shutdown in the class " +
             self.__class__.__name__
         )
 
         # Clean up dead processes before exiting
         self.cleanup_dead_processes()
-
+        """
         print("FAKELOG: [" + time.strftime("%c") + "] [UnisonCTRL] Exiting\n")
-
-        logging.debug(
+        """
+        self.logger.debug(
             "Script shutdown complete in class " +
             self.__class__.__name__
         )
 
-        logging.info("Exiting UnisonCTRL")
+        self.logger.info("Exiting UnisonCTRL")
 
 
 # print("FAKELOG: STARTING before class even opens")

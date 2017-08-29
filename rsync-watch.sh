@@ -5,9 +5,7 @@ function run() {
    clear;
    echo "Copying"
    scp unisonctrl/*.py pcnartsync:/opt/unisonctrl/unisonctrl/
-#   clear;
-#  $file
-#  flake8
+   notify-send "Rsync Complete" "Files updated on PcnArtSync\n`date`" -u critical -i network-server -t 1
 }
 
 run;
