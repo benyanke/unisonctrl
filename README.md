@@ -1,5 +1,7 @@
 # UnisonCTRL
 
+[![Coverage Status](https://coveralls.io/repos/github/benyanke/unisonctrl/badge.svg?branch=master)](https://coveralls.io/github/benyanke/unisonctrl?branch=master)
+
 UnisonCTRL makes it easier to sync large mostly-read-only datasets with unison by spawning multiple unison instances.
 
 To run, execute `python3 unisonctrl/unisonctrl.py.` This will run everything.
