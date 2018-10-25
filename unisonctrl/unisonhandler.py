@@ -664,7 +664,7 @@ class UnisonHandler():
         """Kill a process by it's PID.
 
         Starts with SIGINT (ctrl + c), then waits 6 seconds, checking
-        every 1/3 second. If it doesn't die after 6 seconds, it is
+        every 1/3 second. If it doesn't die after another 6 seconds, it is
         attempted to be killed with psutil.terminate, then psutil.kill.
 
         Parameters
