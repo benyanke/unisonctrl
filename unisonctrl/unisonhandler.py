@@ -581,8 +581,10 @@ class UnisonHandler():
     def kill_sync_instance_by_pid(self, pid):
         """Kill unison instance by it's PID.
 
-        Includes build in protection for accidentally killing a non-unison
-        program, and even other unison programs not started with this script
+        Includes built-in protection for accidentally killing a non-unison
+        program, and even other unison programs not started with this script.
+        This ensures that this function will never kill a PID that we have not
+        started with unisonctrl.
 
         Paramaters
         -------
